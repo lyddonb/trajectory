@@ -8,21 +8,6 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-/*
-{
-    "request": "requestid.path.appid.version.module.instanceid",
-    "items": {
-        "cpu_usage": "0.0|g",
-        "memory_usage": "0.0|g",
-        "exec_time": "0|ms",
-        "overhead": "0|g",
-        "system_GetSystemStats_offset": "6|g",
-        "end_memory": "0.0|g",
-        "end_cpu": "0.0|g"
-    }
-}
-*/
-
 var port string = ":1200"
 
 func Listen(redisClient redis.Conn) {
@@ -55,19 +40,16 @@ func handleClient(socketConn net.Conn, redisClient redis.Conn) {
 			return
 		}
 
-		s := string(buf[:n])
+		for _, stat := range ParseStat(buf[:n]) {
+			redisClient.Send("HSET", stat.RedisKey(), stat.Id, stat.ToRedis())
+		}
+		redisClient.Flush()
 
-		fmt.Printf("Sent item: %s\n", s)
+		v, _ := redisClient.Receive()
+		fmt.Printf("Test %s\n", v)
 
-		//redisClient.Do("SET", "hello", "world")
-		//r, _ := redisClient.Do("GET", "hello")
-		//fmt.Printf("Response from redis %s.\n", r)
-
-		//_, err2 := conn.Write(buf[0:n])
-
-		//if err2 != nil {
-		//return
-		//}
+		r, _ := redisClient.Do("KEYS", "Stat:*")
+		fmt.Printf("Response from redis %s.\n", r)
 	}
 }
 

@@ -21,28 +21,43 @@ type Config struct {
 }
 
 var (
-	config     *Config
-	configLock = new(sync.RWMutex)
+	config      *Config
+	configLock  = new(sync.RWMutex)
+	defaultPort = 1200
+	host        = "127.0.0.1"
 )
 
 func loadConfig(fail bool) {
 	file, err := ioutil.ReadFile("config.json")
 	if err != nil {
-		log.Println("open config: ", err)
-		if fail {
-			os.Exit(1)
-		}
+		handleError("open", err)
+		return
 	}
 
 	temp := new(Config)
 	if err = json.Unmarshal(file, temp); err != nil {
-		log.Println("parse config: ", err)
-		if fail {
-			os.Exit(1)
-		}
+		handleError("parse", err)
+		return
 	}
+
+	setConfig(temp)
+}
+
+func handleError(step string, err error) {
+	log.Println(step, " config: ", err)
+	setDefaultConfig()
+}
+
+func setDefaultConfig() {
+	c := new(Config)
+	c.HostPort = defaultPort
+	c.RedisHost = host
+	setConfig(c)
+}
+
+func setConfig(c *Config) {
 	configLock.Lock()
-	config = temp
+	config = c
 	configLock.Unlock()
 }
 
