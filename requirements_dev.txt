@@ -1,0 +1,7 @@
+nose
+rednose
+mock
+coverage
+nose-exclude
+
+-r requirements.txt
