@@ -3,10 +3,9 @@ package trajectory
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
-
-	"github.com/garyburd/redigo/redis"
 )
 
 /*
@@ -30,25 +29,29 @@ import (
 */
 
 var statKeyPrefix = "Stat:"
+var timestampKey = "timestamp"
+var StatKeys = "StatKeys"
 
 type Request struct {
-	Request string            `json:"request"`
-	Items   map[string]string `json:"items"`
+	Id      string            `json:"id"`
+	Machine string            `json:"machine"`
+	Stats   map[string]string `json:"stats"`
 }
 
 type Stat struct {
-	Parent string
-	Id     string `redis:"id"`
-	Value  string `redis:"value"`
-	Type   string `redis:"type"`
+	Id      string `redis:"id"`
+	Machine string
+	Value   string `redis:"value"`
+	Type    string `redis:"type"`
 }
 
-func (s *Stat) ToRedis() redis.Args {
-	return redis.Args{}.Add(s.Id).AddFlat(&s)
+func (s *Stat) Key() string {
+	return statKeyPrefix + s.Id
 }
 
-func (s *Stat) RedisKey() string {
-	return statKeyPrefix + s.Parent
+func (s *Stat) KeyWithOutStatType() string {
+	splitId := strings.Split(s.Id, ".")
+	return s.Machine + "$" + strings.Join(splitId[:len(splitId)-1], ".")
 }
 
 func ParseStat(message []byte) []Stat {
@@ -57,33 +60,37 @@ func ParseStat(message []byte) []Stat {
 		return ParseJsonStats(message)
 	}
 
-	// Grab the first piece of the string up to the first period and assume some
-	// sort of parent id.
-	return ParseStringStats(message)
+	// Grab the first piece of the string up to the first period.
+	fmt.Println("Parse string only stat %s", message)
+	//return ParseStringStats(message)
+	return nil
 }
 
-func ParseStringStats(message []byte) []Stat {
-	stats := make([]Stat, 0)
+//func ParseStringStats(message []byte) []Stat {
+//stats := make([]Stat, 0)
 
-	messageString := string(message[:])
+//messageString := string(message[:])
+////timestamp := time.Now().UTC().Format("20060102150405")
 
-	for _, mess := range strings.Split(messageString, ",") {
-		// TODO: Convert all to regex. For now just hacking ;)
-		keyValueSplit := strings.Split(mess, ":")
-		parent := strings.Split(keyValueSplit[0], ".")[0]
-		valueSplit := strings.Split(keyValueSplit[1], "|")
+//for _, mess := range strings.Split(messageString, ",") {
+//// TODO: Convert all to regex. For now just hacking ;)
+//keyValueSplit := strings.Split(mess, ":")
+//valueSplit := strings.Split(keyValueSplit[1], "|")
 
-		stat := Stat{
-			parent,
-			keyValueSplit[0],
-			valueSplit[0],
-			valueSplit[1],
-		}
+//stats = append(stats,
+//makeStat(keyValueSplit[0], valueSplit[0], valueSplit[1]))
+//}
 
-		stats = append(stats, stat)
+//return stats
+//}
+
+func makeStat(id, machine, value, statType string) Stat {
+	return Stat{
+		id,
+		machine,
+		value,
+		statType,
 	}
-
-	return stats
 }
 
 func ParseJsonStats(message []byte) []Stat {
@@ -95,18 +102,11 @@ func ParseJsonStats(message []byte) []Stat {
 		return stats
 	}
 
-	// Split the parent out of the request id.
-	parent := strings.Split(request.Request, ".")[0]
-
-	for key, value := range request.Items {
+	for key, value := range request.Stats {
 		valueSplit := strings.Split(value, "|")
-		stat := Stat{
-			parent,
-			request.Request + "." + key,
-			valueSplit[0],
-			valueSplit[1],
-		}
-		stats = append(stats, stat)
+		stats = append(stats,
+			makeStat(request.Id+"."+key, request.Machine, valueSplit[0],
+				valueSplit[1]))
 	}
 
 	return stats

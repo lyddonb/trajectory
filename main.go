@@ -8,6 +8,15 @@ import (
 )
 
 func main() {
+	// Web host
+	go func() {
+		trajectory.StartWeb()
+	}()
+
+	go func() {
+		trajectory.StartRest()
+	}()
+
 	// Redis test
 	redisClient, err := trajectory.Connect()
 	if err != err {
