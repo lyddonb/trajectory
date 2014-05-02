@@ -4,6 +4,10 @@ import time
 
 from trajectory.db import redisdb
 
+
+# TODO: Add timestamp to stat
+
+
 MACHINE_KEY = "Machine"
 STAT_KEY = "StatKeys"
 
@@ -63,6 +67,7 @@ def save_stats(stats):
         pipe.execute()
 
 
+# TODO: Convert to generator.
 def ibuild_stats(stat_input):
     logging.info("Parsing %s to json", stat_input)
     stats_paylaod = json.loads(stat_input)
@@ -74,3 +79,25 @@ def ibuild_stats(stat_input):
              for stat_key, value in stats_paylaod[STAT_STATS].items())
 
     return stats
+
+
+def get_stats_for_machine(path=None):
+    # If no path return all stats.
+
+    # TODO: Add path filter.
+    return [make_stat(stat) for stat in redisdb.zrevrange(STAT_KEY, 0, 150)]
+
+
+def make_stat(stat):
+    stat = stat.decode('UTF-8')
+
+    # Kinda GAE specific. Tweak later.
+    split_stat = stat.split('$')
+    request_id, url = split_stat[1].split('.')
+
+    return {
+        'stat_key': split_stat[1],
+        'request_id': request_id,
+        'url': url,
+        'parent': split_stat[0]
+    }

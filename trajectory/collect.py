@@ -2,19 +2,36 @@ import logging
 import socketserver
 
 from trajectory.stat import parse_stats
+from trajectory.task import parse_tasks
+
+STAT = "STAT"
+TASK = "TASK"
+PADDING = " "
+KEY_SIZE = 5
+
+
+HANDLERS = {
+    STAT: parse_stats,
+    TASK: parse_tasks
+}
 
 
 class TCPHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
-        self.data = self.request.recv(512).strip()
+        self.data = self.request.recv(1024).strip()
 
         self.data = self.data.decode('UTF-8')
         logging.info("Data: %s", self.data)
 
-        if self.data[:5] == "STAT ":
-            logging.info("Is stat")
-            parse_stats(self.data[5:])
+        prefix = self.data[:KEY_SIZE]
+        key = prefix.rstrip(PADDING)
+
+        if key not in HANDLERS:
+            logging.info("Unhandled handler type.")
+            return
+
+        HANDLERS[key](self.data[KEY_SIZE:])
 
 
 def start():
