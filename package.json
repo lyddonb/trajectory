@@ -1,0 +1,27 @@
+{
+  "name": "react-quickstart",
+  "version": "0.0.0",
+  "description": "React project",
+  "browser": "./web/js/app.js",
+  "browserify": {
+    "transform": [
+      ["reactify", {"harmony": true}]
+    ]
+  },
+  "dependencies": {
+    "react": "~0.10.0",
+    "underscore": "~1.6.0",
+    "backbone": "~1.1.2",
+    "d3": "~3.3.0"
+  },
+  "devDependencies": {
+    "reactify": "~0.10.0",
+    "envify": "~1.2.0",
+    "browserify": "~3.32.1",
+    "connect-browserify": "~2.0.1",
+    "uglify-js": "~2.4.13",
+    "supervisor": "~0.5.7",
+    "less" : "~1.7.0"
+  },
+  "license": "MIT"
+}
