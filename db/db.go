@@ -1,4 +1,4 @@
-package pipe
+package db
 
 import (
 	"fmt"
@@ -6,8 +6,6 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 )
-
-var pool *redis.Pool
 
 type DBPool interface {
 	Get() redis.Conn
@@ -39,6 +37,6 @@ func newPool(server, password string) *redis.Pool {
 	}
 }
 
-func StartDB(server, password string) {
-	pool = newPool(server, password)
+func StartDB(server, password string) DBPool {
+	return newPool(server, password)
 }

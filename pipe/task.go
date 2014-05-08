@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
+	"github.com/lyddonb/trajectory/db"
 )
 
 const (
@@ -26,6 +27,7 @@ func (t Task) Key() string {
 
 type TaskPipeline struct {
 	isOpen bool
+	pool   db.DBPool
 }
 
 func (tp *TaskPipeline) Handler(conn net.Conn) {
@@ -42,11 +44,14 @@ func (tp *TaskPipeline) Open() bool {
 
 func (tp *TaskPipeline) Parse(message []byte) {
 	task := ParseTask(message)
-	WriteTask(task, pool)
+	WriteTask(task, tp.pool)
 }
 
-func NewTaskPipeline() *TaskPipeline {
-	return &TaskPipeline{isOpen: true}
+func NewTaskPipeline(pool db.DBPool) *TaskPipeline {
+	return &TaskPipeline{
+		isOpen: true,
+		pool:   pool,
+	}
 }
 
 func ParseTask(message []byte) Task {
@@ -80,8 +85,7 @@ func ParseTask(message []byte) Task {
 	return taskMap
 }
 
-func WriteTask(task Task, redisPool DBPool) string {
-	fmt.Println("Write Task.")
+func WriteTask(task Task, redisPool db.DBPool) string {
 	conn := redisPool.Get()
 	defer conn.Close()
 
