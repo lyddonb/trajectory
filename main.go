@@ -1,18 +1,12 @@
 package main
 
-import (
-	"fmt"
-	"os"
-
-	"github.com/lyddonb/trajectory/trajectory"
-)
+import "github.com/lyddonb/trajectory/pipe"
 
 func main() {
-	// Redis test
-	redisClient, err := trajectory.Connect()
-	if err != err {
-		fmt.Fprintf(os.Stderr, "Could not connection to redis: %s", err.Error())
-	}
+	// Stand up redis pool.
+	pipe.StartDB("127.0.0.1:6379", "")
 
-	trajectory.Listen(redisClient)
+	listener := pipe.MakeConnection("tcp", ":1200")
+	taskPipeline := pipe.NewTaskPipeline()
+	pipe.Listen(listener, taskPipeline)
 }

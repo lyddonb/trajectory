@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo -n "bad" | nc 127.0.0.1 1200
+echo -n "{\"bad2\": \"invalid\"}" | nc 127.0.0.1 1200
+echo -n "{\"parent_task_id\": \"parenttaskid\", \"task_id\": \"taskid\", \"request_id\": \"requestid\", \"parent_request_id\": \"parentrequestid\"}" | nc 127.0.0.1 1200
