@@ -5,29 +5,13 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"time"
 
-	"github.com/garyburd/redigo/redis"
 	"github.com/lyddonb/trajectory/db"
 )
 
-const (
-	PARENT_TASK_ID    = "parent_task_id"
-	TASK_ID           = "task_id"
-	REQUEST_ID        = "request_id"
-	PARENT_REQUEST_ID = "parent_request_id"
-	PARENT_REQUESTS   = "ParentRequests"
-)
-
-type Task map[string]string
-
-func (t Task) Key() string {
-	return fmt.Sprintf("%s:%s:%s", t[PARENT_TASK_ID], t[TASK_ID], t[REQUEST_ID])
-}
-
 type TaskPipeline struct {
 	isOpen bool
-	pool   db.DBPool
+	dal    *db.TaskDataAccess
 }
 
 func (tp *TaskPipeline) Handler(conn net.Conn) {
@@ -42,21 +26,24 @@ func (tp *TaskPipeline) Open() bool {
 	return tp.isOpen
 }
 
-func (tp *TaskPipeline) Parse(message []byte) {
-	task := ParseTask(message)
-	WriteTask(task, tp.pool)
+func (tp *TaskPipeline) Parse(message []byte, remoteAddr net.Addr) {
+	task := ParseTask(message, remoteAddr)
+
+	tp.dal.SaveTask(task)
 }
 
 func NewTaskPipeline(pool db.DBPool) *TaskPipeline {
+	dal := db.NewTaskDataAccess(pool)
+
 	return &TaskPipeline{
 		isOpen: true,
-		pool:   pool,
+		dal:    dal,
 	}
 }
 
-func ParseTask(message []byte) Task {
+func ParseTask(message []byte, remoteAddr net.Addr) db.Task {
 	var taskJson map[string]*json.RawMessage
-	taskMap := make(Task)
+	taskMap := make(db.Task)
 
 	err := json.Unmarshal(message, &taskJson)
 
@@ -83,30 +70,4 @@ func ParseTask(message []byte) Task {
 	}
 
 	return taskMap
-}
-
-func WriteTask(task Task, redisPool db.DBPool) string {
-	conn := redisPool.Get()
-	defer conn.Close()
-
-	taskKey := task.Key()
-
-	if taskKey == "::" {
-		fmt.Println("Not a valid task. %s", task)
-		return ""
-	}
-
-	timestamp := strconv.FormatInt(time.Now().UTC().Unix(), 10)
-	parentRequestId := task[PARENT_REQUEST_ID]
-
-	conn.Send("HMSET", redis.Args{taskKey}.AddFlat(task)...)
-	conn.Send("ZADD", parentRequestId, timestamp, taskKey)
-	conn.Send("ZADD", PARENT_REQUESTS, timestamp, parentRequestId)
-
-	conn.Flush()
-
-	r, _ := conn.Do("ZREVRANGE", PARENT_REQUESTS, 0, 150)
-	fmt.Printf("Response from redis %s.\n", r)
-
-	return timestamp
 }

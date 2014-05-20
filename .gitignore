@@ -3,3 +3,4 @@ __pycache__
 supervisord.log
 node_modules
 web/js/.module-cache
+*.test
