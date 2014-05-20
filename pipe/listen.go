@@ -12,7 +12,7 @@ type Pipeline interface {
 	Handler(net.Conn)
 	Error(error)
 	Open() bool
-	Parse([]byte, net.Addr)
+	Parse([]byte, string)
 }
 
 func MakeConnection(connection, address string) net.Listener {
@@ -60,7 +60,7 @@ func handleClient(socketConn net.Conn, pipeline Pipeline) {
 
 		// TODO: Have parse data pass to a channel to apply to the database,
 		// this can be quite large as redis can take in a ton of connections.
-		go pipeline.Parse(buf[:count], socketConn.RemoteAddr())
+		go pipeline.Parse(buf[:count], socketConn.RemoteAddr().String())
 	}
 }
 

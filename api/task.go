@@ -9,7 +9,15 @@ import (
 // TODO: Have the take requests take a "machine" id to filter by.
 // TODO: Create a list of "machines" that we are tracking from.
 
-func convertTaskListToSet(taskScores []string) map[string]int {
+type TaskAPI struct {
+	dal db.DataAccess
+}
+
+func NewTaskAPI(dal db.DataAccess) *TaskAPI {
+	return &TaskAPI{dal}
+}
+
+func convertWeightedListToSet(taskScores []string) map[string]int {
 	var lastItem string
 	set := make(map[string]int)
 
@@ -37,12 +45,38 @@ func convertTaskListToSet(taskScores []string) map[string]int {
 }
 
 // Returns a byte array of a jsonified list of strings (request ids).
-func ListTaskRequests(taskData db.DataAccess, machine string) (map[string]int, error) {
-	taskScores, error := taskData.GetRequests(machine)
+func (a *TaskAPI) ListRequests(address string) (map[string]int, error) {
+	taskScores, error := a.dal.GetRequests(address)
 
 	if error != nil {
 		return nil, error
 	}
 
-	return convertTaskListToSet(taskScores), nil
+	return convertWeightedListToSet(taskScores), nil
 }
+
+func (a *TaskAPI) ListAddresses() (map[string]int, error) {
+	addressScores, error := a.dal.GetAddresses()
+
+	if error != nil {
+		return nil, error
+	}
+
+	return convertWeightedListToSet(addressScores), nil
+}
+
+func (a *TaskAPI) ListRequestTaskKeys(requestId string) (map[string]int, error) {
+	taskKeyScores, error := a.dal.GetRequestTaskKeys(requestId)
+
+	if error != nil {
+		return nil, error
+	}
+
+	return convertWeightedListToSet(taskKeyScores), nil
+}
+
+//func ListRequestTasks(taskData db.DataAccess) ([]db.Task, error) {
+//}
+
+//func GetTaskForKey(taskData db.DataAccess) (db.Task, error) {
+//}

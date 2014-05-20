@@ -54,7 +54,7 @@ func (p *MockPipeline) Error(error) {
 	p.errored = true
 }
 
-func (p *MockPipeline) Parse([]byte) {
+func (p *MockPipeline) Parse(message []byte, remoteAddr string) {
 	p.stopped = true
 	p.handled = true
 }
@@ -69,9 +69,24 @@ func (c *MockConnection) Close() error {
 	return args.Error(0)
 }
 
-func (c *MockConnection) Read(b []byte) (n int, err error) {
+func (c *MockConnection) Read(b []byte) (int, error) {
 	args := c.Mock.Called()
 	return args.Int(0), args.Error(1)
+}
+
+func (c *MockConnection) RemoteAddr() net.Addr {
+	args := c.Mock.Called()
+	return args.Get(0).(net.Addr)
+}
+
+type MockAddr struct {
+	mock.Mock
+	net.Addr
+}
+
+func (a *MockAddr) String() string {
+	args := a.Mock.Called()
+	return args.String(0)
 }
 
 func TestFailedListen(t *testing.T) {
@@ -121,9 +136,13 @@ func TestHandleSuccessfullClient(t *testing.T) {
 	pipeline := new(MockPipeline)
 	pipeline.stopped = false
 	connection := new(MockConnection)
+	remoteAddr := new(MockAddr)
 
 	connection.On("Close").Return(nil)
 	connection.On("Read").Return(1, nil)
+	connection.On("RemoteAddr").Return(remoteAddr)
+
+	remoteAddr.On("String").Return("address")
 
 	// Figure out how to make this work.
 	//pipeline.On("Parse").Return().Twice()
@@ -132,4 +151,5 @@ func TestHandleSuccessfullClient(t *testing.T) {
 
 	connection.Mock.AssertExpectations(t)
 	pipeline.Mock.AssertExpectations(t)
+	remoteAddr.Mock.AssertExpectations(t)
 }

@@ -26,8 +26,10 @@ func (tp *TaskPipeline) Open() bool {
 	return tp.isOpen
 }
 
-func (tp *TaskPipeline) Parse(message []byte, remoteAddr net.Addr) {
-	task := ParseTask(message, remoteAddr)
+func (tp *TaskPipeline) Parse(message []byte, remoteAddr string) {
+	task := ParseTask(message)
+
+	task[db.REQUEST_ADDRESS] = remoteAddr
 
 	tp.dal.SaveTask(task)
 }
@@ -41,7 +43,7 @@ func NewTaskPipeline(pool db.DBPool) *TaskPipeline {
 	}
 }
 
-func ParseTask(message []byte, remoteAddr net.Addr) db.Task {
+func ParseTask(message []byte) db.Task {
 	var taskJson map[string]*json.RawMessage
 	taskMap := make(db.Task)
 

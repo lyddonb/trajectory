@@ -14,10 +14,17 @@ const (
 	REQUEST_ID        = "request_id"
 	PARENT_REQUESTS   = "ParentRequests"
 	PARENT_REQUEST_ID = "parent_request_id"
+	REQUEST_ADDRESS   = "RequestAddress"
+	ADDRESS           = "Address"
+	URL               = "url"
 )
 
 type DataAccess interface {
 	GetRequests(machine string) ([]string, error)
+	GetRequestTaskKeys(requestId string) ([]string, error)
+	GetAddresses() ([]string, error)
+	SaveTask(task Task) string
+	GetTaskForKey(taskKey string) (Task, error)
 }
 
 type TaskDataAccess struct {
@@ -34,12 +41,47 @@ func NewTaskDataAccess(pool DBPool) *TaskDataAccess {
 	return &TaskDataAccess{pool}
 }
 
-func (c *TaskDataAccess) GetRequests(machine string) ([]string, error) {
+func (c *TaskDataAccess) getRangeResults(key string) ([]string, error) {
 	conn := c.pool.Get()
 	defer conn.Close()
 
 	return redis.Strings(
-		conn.Do("ZREVRANGE", PARENT_REQUESTS, 0, -1, "WITHSCORES"))
+		conn.Do("ZREVRANGE", key, 0, -1, "WITHSCORES"))
+}
+
+func (c *TaskDataAccess) GetRequests(address string) ([]string, error) {
+	return c.getRangeResults(getRequestKey(address))
+}
+
+func (c *TaskDataAccess) GetAddresses() ([]string, error) {
+	return c.getRangeResults(ADDRESS)
+}
+
+func (c *TaskDataAccess) GetRequestTaskKeys(requestId string) ([]string, error) {
+	return c.getRangeResults(requestId)
+}
+
+func getRequestKey(address string) string {
+	return fmt.Sprintf("%s:%s", PARENT_REQUESTS, address)
+}
+
+func (c *TaskDataAccess) GetTaskForKey(taskKey string) (Task, error) {
+	conn := c.pool.Get()
+	defer conn.Close()
+
+	v, err := redis.Values(conn.Do("HGETALL", taskKey))
+
+	if err != nil {
+		return nil, err
+	}
+
+	var task Task
+
+	if err := redis.ScanStruct(v, task); err != nil {
+		return nil, err
+	}
+
+	return task, nil
 }
 
 func (c *TaskDataAccess) SaveTask(task Task) string {
@@ -58,7 +100,8 @@ func (c *TaskDataAccess) SaveTask(task Task) string {
 
 	AddTask(conn, taskKey, task)
 	AddTaskToParentRequest(conn, parentRequestId, timestamp, taskKey)
-	AddParentRequest(conn, timestamp, parentRequestId)
+	AddParentRequest(conn, task[REQUEST_ADDRESS], timestamp, parentRequestId)
+	AddAddress(conn, task[REQUEST_ADDRESS], timestamp)
 
 	conn.Flush()
 
@@ -66,7 +109,7 @@ func (c *TaskDataAccess) SaveTask(task Task) string {
 }
 
 func AddTask(conn redis.Conn, taskKey string, task Task) {
-	conn.Send("HMSET", redis.Args{taskKey}.AddFlat(task)...)
+	conn.Send("HMSET", redis.Args{}.Add(taskKey).AddFlat(task)...)
 }
 
 func AddTaskToParentRequest(
@@ -74,6 +117,10 @@ func AddTaskToParentRequest(
 	conn.Send("ZADD", parentRequestId, timestamp, taskKey)
 }
 
-func AddParentRequest(conn redis.Conn, timestamp, parentRequestId string) {
-	conn.Send("ZADD", PARENT_REQUESTS, timestamp, parentRequestId)
+func AddParentRequest(conn redis.Conn, address, timestamp, parentRequestId string) {
+	conn.Send("ZADD", getRequestKey(address), timestamp, parentRequestId)
+}
+
+func AddAddress(conn redis.Conn, address, timestamp string) {
+	conn.Send("ZADD", ADDRESS, timestamp, address)
 }
