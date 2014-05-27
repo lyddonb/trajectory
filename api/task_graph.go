@@ -16,6 +16,9 @@ type Node struct {
 	IsParent  bool
 }
 
+//func (n *Node) MarshalJSON() ([]byte, error) {
+//}
+
 func (a *TaskAPI) GetRequestTaskGraph(requestId string) (*Node, error) {
 	taskKeys, e := a.ListRequestTaskKeys(requestId)
 
@@ -89,6 +92,7 @@ func HandleTasks(taskChannel <-chan db.Task, taskNodes map[string]*Node) {
 
 			if !isNode {
 				fmt.Println("Error: couldn't find node?")
+				return
 			}
 
 			node.Name = task[db.URL]

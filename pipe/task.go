@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"strconv"
 
+	"github.com/lyddonb/trajectory/api"
 	"github.com/lyddonb/trajectory/db"
 )
 
@@ -45,31 +45,13 @@ func NewTaskPipeline(pool db.DBPool) *TaskPipeline {
 
 func ParseTask(message []byte) db.Task {
 	var taskJson map[string]*json.RawMessage
-	taskMap := make(db.Task)
 
 	err := json.Unmarshal(message, &taskJson)
 
 	if err != nil {
 		fmt.Println("Error parsing task json %s", err)
-		return taskMap
+		return make(db.Task)
 	}
 
-	for key, value := range taskJson {
-		var stringValue string
-		var intValue int
-		var floatValue float64
-		var boolValue bool
-
-		if json.Unmarshal(*value, &stringValue) == nil {
-			taskMap[key] = stringValue
-		} else if json.Unmarshal(*value, &intValue) == nil {
-			taskMap[key] = strconv.Itoa(intValue)
-		} else if json.Unmarshal(*value, &floatValue) == nil {
-			taskMap[key] = strconv.FormatFloat(floatValue, 'f', -1, 64)
-		} else if json.Unmarshal(*value, &boolValue) == nil {
-			taskMap[key] = strconv.FormatBool(boolValue)
-		}
-	}
-
-	return taskMap
+	return api.ConvertTask(taskJson)
 }

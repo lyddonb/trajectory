@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"strconv"
 
 	"github.com/lyddonb/trajectory/db"
@@ -13,8 +14,8 @@ type TaskAPI struct {
 	dal db.DataAccess
 }
 
-func NewTaskAPI(dal db.DataAccess) *TaskAPI {
-	return &TaskAPI{dal}
+func NewTaskAPI(pool db.DBPool) *TaskAPI {
+	return &TaskAPI{db.NewTaskDataAccess(pool)}
 }
 
 func convertWeightedListToSet(taskScores []string) map[string]int {
@@ -44,6 +45,33 @@ func convertWeightedListToSet(taskScores []string) map[string]int {
 	return set
 }
 
+func (a *TaskAPI) SaveTask(task db.Task) string {
+	return a.dal.SaveTask(task)
+}
+
+func ConvertTask(taskJson map[string]*json.RawMessage) db.Task {
+	taskMap := make(db.Task)
+
+	for key, value := range taskJson {
+		var stringValue string
+		var intValue int
+		var floatValue float64
+		var boolValue bool
+
+		if json.Unmarshal(*value, &stringValue) == nil {
+			taskMap[key] = stringValue
+		} else if json.Unmarshal(*value, &intValue) == nil {
+			taskMap[key] = strconv.Itoa(intValue)
+		} else if json.Unmarshal(*value, &floatValue) == nil {
+			taskMap[key] = strconv.FormatFloat(floatValue, 'f', -1, 64)
+		} else if json.Unmarshal(*value, &boolValue) == nil {
+			taskMap[key] = strconv.FormatBool(boolValue)
+		}
+	}
+
+	return taskMap
+}
+
 // Returns a byte array of a jsonified list of strings (request ids).
 func (a *TaskAPI) ListRequests(address string) (map[string]int, error) {
 	taskScores, error := a.dal.GetRequests(address)
@@ -66,10 +94,10 @@ func (a *TaskAPI) ListAddresses() (map[string]int, error) {
 }
 
 func (a *TaskAPI) ListRequestTaskKeys(requestId string) (map[string]int, error) {
-	taskKeyScores, error := a.dal.GetRequestTaskKeys(requestId)
+	taskKeyScores, err := a.dal.GetRequestTaskKeys(requestId)
 
-	if error != nil {
-		return nil, error
+	if err != nil {
+		return nil, err
 	}
 
 	return convertWeightedListToSet(taskKeyScores), nil
@@ -78,5 +106,6 @@ func (a *TaskAPI) ListRequestTaskKeys(requestId string) (map[string]int, error) 
 //func ListRequestTasks(taskData db.DataAccess) ([]db.Task, error) {
 //}
 
-//func GetTaskForKey(taskData db.DataAccess) (db.Task, error) {
-//}
+func (a *TaskAPI) GetTaskForKey(taskKey string) (db.Task, error) {
+	return a.dal.GetTaskForKey(taskKey)
+}

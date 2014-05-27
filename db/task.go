@@ -54,7 +54,11 @@ func (c *TaskDataAccess) GetRequests(address string) ([]string, error) {
 }
 
 func (c *TaskDataAccess) GetAddresses() ([]string, error) {
-	return c.getRangeResults(ADDRESS)
+	address, err := c.getRangeResults(ADDRESS)
+
+	fmt.Println(address)
+	fmt.Println(err)
+	return address, err
 }
 
 func (c *TaskDataAccess) GetRequestTaskKeys(requestId string) ([]string, error) {
@@ -73,6 +77,10 @@ func (c *TaskDataAccess) GetTaskForKey(taskKey string) (Task, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if v == nil {
+		return nil, nil
 	}
 
 	var task Task
