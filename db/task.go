@@ -83,13 +83,7 @@ func (c *TaskDataAccess) GetTaskForKey(taskKey string) (Task, error) {
 		return nil, nil
 	}
 
-	var task Task
-
-	if err := redis.ScanStruct(v, task); err != nil {
-		return nil, err
-	}
-
-	return task, nil
+	return ScanMap(v)
 }
 
 func (c *TaskDataAccess) SaveTask(task Task) string {
