@@ -2,6 +2,7 @@ package rest
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -18,6 +19,8 @@ func NewTaskServices(taskAPI *api.TaskAPI) *TaskServices {
 }
 
 func (s *TaskServices) addTask(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Adding task")
+
 	decoder := json.NewDecoder(r.Body)
 	//var item map[string]string
 	var taskJson map[string]*json.RawMessage
@@ -26,12 +29,25 @@ func (s *TaskServices) addTask(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		SendJsonErrorResponse(w, &taskJson, err.Error())
+		return
 	}
 
-	task := api.ConvertTask(taskJson)
-	task[db.REQUEST_ADDRESS] = r.Host
+	fmt.Println(taskJson)
 
-	timestamp := s.api.SaveTask(task)
+	task := api.ConvertTask(taskJson)
+
+	_, ok := task[db.REQUEST_ADDRESS]
+
+	if !ok {
+		task[db.REQUEST_ADDRESS] = r.Host
+	}
+
+	timestamp, e := s.api.SaveTask(task)
+
+	if e != nil {
+		SendJsonErrorResponse(w, &taskJson, e.Error())
+		return
+	}
 
 	SendJsonResponse(w, timestamp, nil)
 }

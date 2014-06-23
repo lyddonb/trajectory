@@ -1,7 +1,7 @@
 {
-  "name": "react-quickstart",
+  "name": "trajectory",
   "version": "0.0.0",
-  "description": "React project",
+  "description": "Trajectory",
   "browser": "./web/js/app.js",
   "browserify": {
     "transform": [
@@ -12,7 +12,8 @@
     "react": "~0.10.0",
     "underscore": "~1.6.0",
     "backbone": "~1.1.2",
-    "d3": "~3.3.0"
+    "d3": "~3.3.0",
+    "jquery": "~2.1.1"
   },
   "devDependencies": {
     "reactify": "~0.10.0",

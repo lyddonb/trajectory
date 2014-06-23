@@ -3,7 +3,7 @@
 var React = require('react');
 var Stats = require('./stats');
 
-var MachineHost = "http://localhost:8888/api/machines"; 
+var MachineHost = "http://localhost:3000/api/tasks/addresses"; 
 
 
 function getHostUrl() {
@@ -33,7 +33,12 @@ var Machines = React.createClass({
     $.ajax({
       url: url,
       success: function(data) {
-        this.setState({data: data});
+        // TODO: Make this a default handler.
+        if (data.success) {
+          this.setState({data: data.result});
+        } else {
+          console.log("Failed to load addresses.")
+        }
       }.bind(this)
     });
   },
@@ -93,18 +98,19 @@ var MachineBreadcrumb = React.createClass({
 
 var MachineList = React.createClass({
   render: function() {
-    var machineNodes = this.props.data.map(function (machine, index) {
+    console.log(Object.keys(this.props.data));
+    var machineNodes = Object.keys(this.props.data).map(function (machine, index) {
       // TODO: Convert to link node.
       var url = "#/machines/";
-      var full_name = machine.machine;
+      var full_name = machine;
 
-      if (machine.parent !== null && machine.parent !== undefined) {
-        full_name = machine.parent + "." + machine.machine;
-      }
+      //if (machine.parent !== null && machine.parent !== undefined) {
+        //full_name = machine.parent + "." + machine.machine;
+      //}
 
       url += full_name;
 
-      return <div><a href={url}>{machine.machine}</a></div>;
+      return <div><a href={url}>{machine}</a></div>;
     });
 
     return <div className="machineList col-md-2">

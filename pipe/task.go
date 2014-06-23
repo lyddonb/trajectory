@@ -29,9 +29,17 @@ func (tp *TaskPipeline) Open() bool {
 func (tp *TaskPipeline) Parse(message []byte, remoteAddr string) {
 	task := ParseTask(message)
 
-	task[db.REQUEST_ADDRESS] = remoteAddr
+	_, ok := task[db.REQUEST_ADDRESS]
 
-	tp.dal.SaveTask(task)
+	if !ok {
+		task[db.REQUEST_ADDRESS] = remoteAddr
+	}
+
+	_, err := tp.dal.SaveTask(task)
+
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func NewTaskPipeline(pool db.DBPool) *TaskPipeline {

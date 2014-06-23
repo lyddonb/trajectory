@@ -8,22 +8,11 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-const (
-	PARENT_TASK_ID    = "parent_task_id"
-	TASK_ID           = "task_id"
-	REQUEST_ID        = "request_id"
-	PARENT_REQUESTS   = "ParentRequests"
-	PARENT_REQUEST_ID = "parent_request_id"
-	REQUEST_ADDRESS   = "RequestAddress"
-	ADDRESS           = "Address"
-	URL               = "url"
-)
-
-type DataAccess interface {
+type TaskDAL interface {
 	GetRequests(machine string) ([]string, error)
 	GetRequestTaskKeys(requestId string) ([]string, error)
 	GetAddresses() ([]string, error)
-	SaveTask(task Task) string
+	SaveTask(task Task) (string, error)
 	GetTaskForKey(taskKey string) (Task, error)
 }
 
@@ -56,8 +45,6 @@ func (c *TaskDataAccess) GetRequests(address string) ([]string, error) {
 func (c *TaskDataAccess) GetAddresses() ([]string, error) {
 	address, err := c.getRangeResults(ADDRESS)
 
-	fmt.Println(address)
-	fmt.Println(err)
 	return address, err
 }
 
@@ -86,7 +73,7 @@ func (c *TaskDataAccess) GetTaskForKey(taskKey string) (Task, error) {
 	return ScanMap(v)
 }
 
-func (c *TaskDataAccess) SaveTask(task Task) string {
+func (c *TaskDataAccess) SaveTask(task Task) (string, error) {
 	conn := c.pool.Get()
 	defer conn.Close()
 
@@ -94,35 +81,59 @@ func (c *TaskDataAccess) SaveTask(task Task) string {
 
 	if taskKey == "::" {
 		fmt.Println("Not a valid task. %s", task)
-		return ""
+		// TODO: Make this return an error.
+		return "", nil
 	}
 
 	timestamp := strconv.FormatInt(time.Now().UTC().Unix(), 10)
 	parentRequestId := task[PARENT_REQUEST_ID]
 
-	AddTask(conn, taskKey, task)
-	AddTaskToParentRequest(conn, parentRequestId, timestamp, taskKey)
-	AddParentRequest(conn, task[REQUEST_ADDRESS], timestamp, parentRequestId)
-	AddAddress(conn, task[REQUEST_ADDRESS], timestamp)
+	err := AddTask(conn, taskKey, task)
 
-	conn.Flush()
+	if err != nil {
+		return "", err
+	}
 
-	return timestamp
+	err = AddTaskToParentRequest(conn, parentRequestId, timestamp, taskKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = AddParentRequest(conn, task[REQUEST_ADDRESS], timestamp, parentRequestId)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = AddAddress(conn, task[REQUEST_ADDRESS], timestamp)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = conn.Flush()
+
+	if err != nil {
+		return "", err
+	}
+
+	return timestamp, nil
 }
 
-func AddTask(conn redis.Conn, taskKey string, task Task) {
-	conn.Send("HMSET", redis.Args{}.Add(taskKey).AddFlat(task)...)
+func AddTask(conn redis.Conn, taskKey string, task Task) error {
+	return conn.Send("HMSET", redis.Args{}.Add(taskKey).AddFlat(task)...)
 }
 
 func AddTaskToParentRequest(
-	conn redis.Conn, parentRequestId, timestamp, taskKey string) {
-	conn.Send("ZADD", parentRequestId, timestamp, taskKey)
+	conn redis.Conn, parentRequestId, timestamp, taskKey string) error {
+	return conn.Send("ZADD", parentRequestId, timestamp, taskKey)
 }
 
-func AddParentRequest(conn redis.Conn, address, timestamp, parentRequestId string) {
-	conn.Send("ZADD", getRequestKey(address), timestamp, parentRequestId)
+func AddParentRequest(conn redis.Conn, address, timestamp, parentRequestId string) error {
+	return conn.Send("ZADD", getRequestKey(address), timestamp, parentRequestId)
 }
 
-func AddAddress(conn redis.Conn, address, timestamp string) {
-	conn.Send("ZADD", ADDRESS, timestamp, address)
+func AddAddress(conn redis.Conn, address, timestamp string) error {
+	return conn.Send("ZADD", ADDRESS, timestamp, address)
 }

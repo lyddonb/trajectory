@@ -1,7 +1,8 @@
 /** @jsx React.DOM */
 var React = require('react');
 
-var StatUrl = "";
+var AddressBase = "http://localhost:3000/api/tasks/addresses/"; 
+var RequestUrl = "/requests"
 
 function getReqeustTrackUrl() {
   return location.origin + "#track/";

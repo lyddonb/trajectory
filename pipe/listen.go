@@ -53,8 +53,7 @@ func handleClient(socketConn net.Conn, pipeline Pipeline) {
 		count, err := socketConn.Read(buf[0:])
 
 		if err != nil {
-			fmt.Println("Error %s trying to accept data.", err)
-			pipeline.Error(err)
+			//pipeline.Error(err)
 			return
 		}
 

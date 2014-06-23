@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 
 	"github.com/lyddonb/trajectory/db"
 )
@@ -11,7 +12,7 @@ import (
 // TODO: Create a list of "machines" that we are tracking from.
 
 type TaskAPI struct {
-	dal db.DataAccess
+	dal db.TaskDAL
 }
 
 func NewTaskAPI(pool db.DBPool) *TaskAPI {
@@ -45,7 +46,19 @@ func convertWeightedListToSet(taskScores []string) map[string]int {
 	return set
 }
 
-func (a *TaskAPI) SaveTask(task db.Task) string {
+func (a *TaskAPI) SaveTask(task db.Task) (string, error) {
+	splitKey := strings.Split(task["id"], ":")
+
+	if len(splitKey) == 2 {
+		task[db.PARENT_TASK_ID] = ""
+		task[db.PARENT_REQUEST_ID] = splitKey[0]
+		task[db.TASK_ID] = splitKey[1]
+	} else {
+		task[db.PARENT_TASK_ID] = splitKey[1]
+		task[db.PARENT_REQUEST_ID] = splitKey[0]
+		task[db.TASK_ID] = splitKey[2]
+	}
+
 	return a.dal.SaveTask(task)
 }
 

@@ -10,6 +10,10 @@ func SetupTasks(pool db.DBPool) *TaskServices {
 	return NewTaskServices(api.NewTaskAPI(pool))
 }
 
+func SetupStats(pool db.DBPool) *StatServices {
+	return NewStatServices(api.NewStatAPI(pool))
+}
+
 func SetupTaskRouter(pool db.DBPool, prefix string) *mux.Router {
 	router := mux.NewRouter()
 
@@ -27,6 +31,18 @@ func SetupTaskRouter(pool db.DBPool, prefix string) *mux.Router {
 		taskServices.getTaskGraphForRequest).Methods("GET")
 	router.HandleFunc(prefix+"task/{taskKey}",
 		taskServices.getTaskByKey).Methods("GET")
+
+	return router
+}
+
+func SetupStatRouter(pool db.DBPool, prefix string) *mux.Router {
+	router := mux.NewRouter()
+
+	statServices := SetupStats(pool)
+
+	router.HandleFunc(prefix, statServices.addStat).Methods("POST")
+	router.HandleFunc(prefix, statServices.getAllStats).Methods("GET")
+	router.HandleFunc(prefix+"{requestId}", statServices.getStatByRequestId).Methods("GET")
 
 	return router
 }

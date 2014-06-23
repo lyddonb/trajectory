@@ -4,8 +4,12 @@ var Backbone = require('backbone');
 Backbone.$ = $;
 var React = require('react');
 
-var Machines = require('./stats/machine');
-var TaskTree = require('./track');
+//var Machines = require('./stats/machine');
+//var TaskTree = require('./track');
+var Breadcrumb = require('./breadcrumb');
+var Hosts = require('./tasks/hosts');
+var HostRequests = require('./tasks/requests');
+var TaskRequestGraph = require('./tasks/graph');
 
 var Router = Backbone.Router.extend({
   initialize: function() {
@@ -15,46 +19,77 @@ var Router = Backbone.Router.extend({
   },
 
   routes: {
-    'machines/:path': 'machines',
-    'machines*': 'machines',
-    'track/:requestId': 'track',
+    'tasks/:host/request/:requestid/graph': 'taskRequestGraph',
+    'tasks/:host': 'taskRequests',
+    'tasks*': 'tasks'
   },
 
-  'machines': function(path) {
-    "use strict";
-
-    this.switchReactView(<Machines url={path} pollInterval={2000} />);
+  'tasks': function() {
+    this.switchBreadcrumbs(<Breadcrumb data={[]} />);
+    this.switchView(<Hosts />);
   },
 
-  'track': function(requestId) {
-    "use strict";
+  'taskRequests': function(host) {
+    var crumbs = [
+      {url: 'tasks/' + host,  name: host}
+    ];
 
-    this.switchReactView(<TaskTree requestId={requestId} />);
+    this.switchBreadcrumbs(<Breadcrumb data={crumbs} />);
+    this.switchView(<HostRequests host={host} />);
   },
 
-  getNode: function() {
-    "use strict";
+  'taskRequestGraph': function(host, requestid) {
+    var crumbs = [
+      {url: 'tasks/' + host,  name: host},
+      {url: 'tasks/' + host + "/request/" + requestid + "/graph",  name: requestid}
+    ];
 
-    return document.getElementById("stats");
+    this.switchBreadcrumbs(<Breadcrumb data={crumbs} />);
+    this.switchView(<TaskRequestGraph host={host} requestid={requestid} />);
+  },
+
+  //routes: {
+    //'machines/:path': 'machines',
+    //'machines*': 'machines',
+    //'track/:requestId': 'track',
+  //},
+
+  //'machines': function(path) {
+    //"use strict";
+
+    //this.switchView(<Machines url={path} pollInterval={2000} />);
+  //},
+
+  //'track': function(requestId) {
+    //"use strict";
+
+    //this.switchView(<TaskTree requestId={requestId} />);
+  //},
+
+  getContentNode: function() {
+    return document.getElementById("mainContent");
+  },
+
+  getBreadcrumbNode: function() {
+    return document.getElementById("mainBreadcrumb");
   },
 
   unmount: function(node) {
-    "use strict";
-
     React.unmountComponentAtNode(node);
   },
 
-  switchReactView: function(view) {
-    "use strict";
-
-    var node = this.getNode();
+  switchReactView: function(view, node) {
     this.unmount(node);
 
-    // TODO: Override equals check and check if same view before reloading.
-    //var args = Array.prototype.slice.call(arguments);
-    //args = args.slice(1, args.length);
-
     React.renderComponent(view, node);
+  },
+
+  switchBreadcrumbs: function(view) {
+    this.switchReactView(view, this.getBreadcrumbNode());
+  },
+
+  switchView: function(view) {
+    this.switchReactView(view, this.getContentNode());
   }
 });
 
