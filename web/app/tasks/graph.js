@@ -131,6 +131,8 @@ var TaskPopUp = React.createClass({
       'min-width': '300px'
     }
 
+    console.log(this.props.taskNodeData);
+
     return (
       <div className="taskTable popover right" style={style}>
         <h3 className="popover-title">

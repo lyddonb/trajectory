@@ -21,7 +21,7 @@ func (s *StatServices) addStat(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Adding stat")
 
 	decoder := json.NewDecoder(r.Body)
-	//var item map[string]string
+
 	var statJson map[string]*json.RawMessage
 
 	err := decoder.Decode(&statJson)
@@ -33,8 +33,9 @@ func (s *StatServices) addStat(w http.ResponseWriter, r *http.Request) {
 
 	request, stat := s.api.MakeRequestStats(statJson)
 
-	fmt.Println(request)
-	fmt.Println(stat)
+	fmt.Println(request.RequestId)
+	fmt.Println(request.MachineInfo)
+	fmt.Println(request.Url)
 
 	//_, ok := task[db.REQUEST_ADDRESS]
 
