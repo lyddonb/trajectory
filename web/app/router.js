@@ -10,6 +10,7 @@ var Breadcrumb = require('./breadcrumb');
 var Hosts = require('./tasks/hosts');
 var HostRequests = require('./tasks/requests');
 var TaskRequestGraph = require('./tasks/graph');
+var TaskDetail = require('./tasks/detail');
 
 var Router = Backbone.Router.extend({
   initialize: function() {
@@ -20,6 +21,7 @@ var Router = Backbone.Router.extend({
 
   routes: {
     'tasks/:host/request/:requestid/graph': 'taskRequestGraph',
+    'tasks/:taskId/detail': 'taskPage',
     'tasks/:host': 'taskRequests',
     'tasks*': 'tasks'
   },
@@ -46,6 +48,10 @@ var Router = Backbone.Router.extend({
 
     this.switchBreadcrumbs(<Breadcrumb data={crumbs} />);
     this.switchView(<TaskRequestGraph host={host} requestid={requestid} />);
+  },
+
+  'taskPage': function(taskId) {
+    this.switchView(<TaskDetail taskId={taskId} />);
   },
 
   //routes: {

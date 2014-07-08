@@ -14,14 +14,14 @@ const (
 	STAT_PREFIX = "/api/stats/"
 )
 
-func setupTasks(pool db.DBPool) {
-	router := rest.SetupTaskRouter(pool, TASK_PREFIX)
+func setupTasks(pool db.DBPool, writeToFile bool) {
+	router := rest.SetupTaskRouter(pool, TASK_PREFIX, writeToFile)
 
 	http.Handle(TASK_PREFIX, router)
 }
 
-func setupStats(pool db.DBPool) {
-	router := rest.SetupStatRouter(pool, STAT_PREFIX)
+func setupStats(pool db.DBPool, writeToFile bool) {
+	router := rest.SetupStatRouter(pool, STAT_PREFIX, writeToFile)
 
 	http.Handle(STAT_PREFIX, router)
 }
@@ -43,8 +43,10 @@ func main() {
 		pipe.Listen(listener, taskPipeline)
 	}()
 
-	setupStats(pool)
-	setupTasks(pool)
+	writeToFile := false
+
+	setupStats(pool, writeToFile)
+	setupTasks(pool, writeToFile)
 	setupWeb()
 
 	http.ListenAndServe(":3000", nil)

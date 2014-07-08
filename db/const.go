@@ -10,4 +10,5 @@ const (
 	ADDRESS           = "Address"
 	URL               = "url"
 	STAT_NAME         = "stat_name"
+	STATUS_CODE       = "status_code"
 )

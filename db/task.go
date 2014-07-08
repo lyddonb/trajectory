@@ -14,6 +14,7 @@ type TaskDAL interface {
 	GetAddresses() ([]string, error)
 	SaveTask(task Task) (string, error)
 	GetTaskForKey(taskKey string) (Task, error)
+	GetTaskKeys(taskId string) ([]string, error)
 }
 
 type TaskDataAccess struct {
@@ -50,6 +51,10 @@ func (c *TaskDataAccess) GetAddresses() ([]string, error) {
 
 func (c *TaskDataAccess) GetRequestTaskKeys(requestId string) ([]string, error) {
 	return c.getRangeResults(requestId)
+}
+
+func (c *TaskDataAccess) GetTaskKeys(taskId string) ([]string, error) {
+	return c.getRangeResults(taskId)
 }
 
 func getRequestKey(address string) string {
@@ -106,6 +111,12 @@ func (c *TaskDataAccess) SaveTask(task Task) (string, error) {
 		return "", err
 	}
 
+	err = AddTaskForTaskId(conn, task[TASK_ID], timestamp, taskKey)
+
+	if err != nil {
+		return "", err
+	}
+
 	err = AddAddress(conn, task[REQUEST_ADDRESS], timestamp)
 
 	if err != nil {
@@ -128,6 +139,11 @@ func AddTask(conn redis.Conn, taskKey string, task Task) error {
 func AddTaskToParentRequest(
 	conn redis.Conn, parentRequestId, timestamp, taskKey string) error {
 	return conn.Send("ZADD", parentRequestId, timestamp, taskKey)
+}
+
+func AddTaskForTaskId(
+	conn redis.Conn, taskId, timestamp, taskKey string) error {
+	return conn.Send("ZADD", taskId, timestamp, taskKey)
 }
 
 func AddParentRequest(conn redis.Conn, address, timestamp, parentRequestId string) error {

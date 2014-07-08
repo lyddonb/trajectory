@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -15,8 +16,39 @@ type TaskAPI struct {
 	dal db.TaskDAL
 }
 
+// A data structure to hold a key/value pair.
+type WeightedScore struct {
+	Key   string
+	Value int
+}
+
+// A slice of Pairs that implements sort.Interface to sort by Value.
+type WeightedScoreList []WeightedScore
+
+func (p WeightedScoreList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p WeightedScoreList) Len() int           { return len(p) }
+func (p WeightedScoreList) Less(i, j int) bool { return p[i].Value < p[j].Value }
+
+// A function to turn a map into a WeightedScoreList, then sort and return it.
+func sortMapByValue(m map[string]int) WeightedScoreList {
+	p := make(WeightedScoreList, len(m))
+	i := 0
+	for k, v := range m {
+		p[i] = WeightedScore{k, v}
+		i++
+	}
+	sort.Sort(sort.Reverse(p))
+	return p
+}
+
 func NewTaskAPI(pool db.DBPool) *TaskAPI {
 	return &TaskAPI{db.NewTaskDataAccess(pool)}
+}
+
+func mergeWeightedList(taskScores []string) WeightedScoreList {
+	mapScores := convertWeightedListToSet(taskScores)
+
+	return sortMapByValue(mapScores)
 }
 
 func convertWeightedListToSet(taskScores []string) map[string]int {
@@ -86,27 +118,37 @@ func ConvertTask(taskJson map[string]*json.RawMessage) db.Task {
 }
 
 // Returns a byte array of a jsonified list of strings (request ids).
-func (a *TaskAPI) ListRequests(address string) (map[string]int, error) {
+func (a *TaskAPI) ListRequests(address string) (WeightedScoreList, error) {
 	taskScores, error := a.dal.GetRequests(address)
 
 	if error != nil {
 		return nil, error
 	}
 
-	return convertWeightedListToSet(taskScores), nil
+	return mergeWeightedList(taskScores), nil
 }
 
-func (a *TaskAPI) ListAddresses() (map[string]int, error) {
+func (a *TaskAPI) ListAddresses() (WeightedScoreList, error) {
 	addressScores, error := a.dal.GetAddresses()
 
 	if error != nil {
 		return nil, error
 	}
 
-	return convertWeightedListToSet(addressScores), nil
+	return mergeWeightedList(addressScores), nil
 }
 
-func (a *TaskAPI) ListRequestTaskKeys(requestId string) (map[string]int, error) {
+func (a *TaskAPI) ListRequestTaskKeys(requestId string) (WeightedScoreList, error) {
+	taskKeyScores, err := a.dal.GetRequestTaskKeys(requestId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return mergeWeightedList(taskKeyScores), nil
+}
+
+func (a *TaskAPI) ListRequestTaskKeysAsSet(requestId string) (map[string]int, error) {
 	taskKeyScores, err := a.dal.GetRequestTaskKeys(requestId)
 
 	if err != nil {
@@ -114,6 +156,16 @@ func (a *TaskAPI) ListRequestTaskKeys(requestId string) (map[string]int, error) 
 	}
 
 	return convertWeightedListToSet(taskKeyScores), nil
+}
+
+func (a *TaskAPI) ListTaskKeys(taskId string) (WeightedScoreList, error) {
+	taskKeyScores, err := a.dal.GetTaskKeys(taskId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return mergeWeightedList(taskKeyScores), nil
 }
 
 //func ListRequestTasks(taskData db.DataAccess) ([]db.Task, error) {

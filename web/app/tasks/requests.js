@@ -20,7 +20,8 @@ var HostRequests = React.createClass({
       success: function(data) {
         // TODO: Make this a default handler.
         if (data.success) {
-          this.setState({data: data.result});
+         this.setState({data: data.result});
+          console.log(data);
         } else {
           console.log("Failed to load addresses.")
         }
@@ -50,11 +51,11 @@ var HostRequests = React.createClass({
 var HostRequestList = React.createClass({
   render: function() {
     var host = this.props.host;
-    var hostNodes = Object.keys(this.props.data).map(function(requestid, index) {
+    var hostNodes = this.props.data.map(function(weigthedResult, index) {
       // TODO: Convert to link node.
-      var url = "#/tasks/" + host + "/request/" + requestid + "/graph";
+      var url = "#/tasks/" + host + "/request/" + weigthedResult.Key + "/graph";
 
-      return <div><a href={url}>{requestid}</a></div>;
+      return <div><a href={url}>{weigthedResult.Key}</a></div>;
     });
 
     return <div className="machineList col-md-2">

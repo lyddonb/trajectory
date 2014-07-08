@@ -16,13 +16,14 @@ type Node struct {
 	childrenMap map[string]*Node
 	Keys        []string `json:"keys"` // Handles multiple runs of the same task
 	IsParent    bool     `json:"is_parent"`
+	Status      int      `json:"status"`
 }
 
 //func (n *Node) MarshalJSON() ([]byte, error) {
 //}
 
 func (a *TaskAPI) GetRequestTaskGraph(requestId string) (*Node, error) {
-	taskKeys, e := a.ListRequestTaskKeys(requestId)
+	taskKeys, e := a.ListRequestTaskKeysAsSet(requestId)
 
 	if e != nil {
 		return nil, e
@@ -54,7 +55,7 @@ func (a *TaskAPI) ProcessTaskKeys(requestId string, taskKeys map[string]int,
 
 		if node.Name == "" {
 			taskNodes[taskKey] = node
-			a.SetTaskName(taskKey, node)
+			a.SetTaskInfo(taskKey, node)
 			//go a.LoadTask(taskKey, loadTaskChan)
 		}
 
@@ -97,7 +98,7 @@ func (a *TaskAPI) ProcessTaskKeys(requestId string, taskKeys map[string]int,
 	return parent
 }
 
-func (a *TaskAPI) SetTaskName(taskKey string, node *Node) {
+func (a *TaskAPI) SetTaskInfo(taskKey string, node *Node) {
 	// Load the task and pass it into the channel.
 	task, err := a.dal.GetTaskForKey(taskKey)
 
@@ -113,6 +114,17 @@ func (a *TaskAPI) SetTaskName(taskKey string, node *Node) {
 	}
 
 	node.Name = task[db.URL]
+
+	status := 0
+	if val, ok := task[db.STATUS_CODE]; ok {
+		if val == "200" {
+			status = 1
+		} else {
+			status = 2
+		}
+	}
+
+	node.Status = status
 }
 
 func (a *TaskAPI) LoadTask(taskKey string, taskChannel chan<- db.Task) {
@@ -200,6 +212,7 @@ func BuildParentNode(requestId string) *Node {
 		make(map[string]*Node),
 		[]string{},
 		true,
+		0,
 	}
 }
 
@@ -214,6 +227,7 @@ func BuildChildNode(taskId, taskKey, contextId string,
 		children,
 		[]string{taskKey},
 		false,
+		0,
 	}
 }
 

@@ -2,11 +2,7 @@
 
 var d3 = require('d3');
 var React = require('react');
-
-function getTaskRequestGraphUrl(address, request) {
-  return "http://localhost:3000/api/tasks/addresses/" + address + "/requests/" +
-  request + "/taskgraph";
-}
+var Urls = require('../urls');
 
 var TaskRequestGraph = React.createClass({
 
@@ -44,20 +40,21 @@ var TaskPopUpList = React.createClass({
   },
 
   componentDidMount: function() {
-    console.log(this.props);
     $.ajax({
-      url: getTaskRequestGraphUrl(this.props.host, this.props.requestid),
+      url: Urls.getTaskInfoUrl(this.props.taskKey),
       success: function(data) {
         if (data.success) {
-          this.setState({data: data.result}).bind(this);
+          this.setState({data: data.result});
         } else {
-          console.log("Failed to load request graph.")
+          console.log("Failed to load task info.")
         }
-      }
+      }.bind(this)
     });
   },
 
   render: function() {
+    // TODO: Get request_info from data. Split on # and take the last index
+    // which is equal to the request id
     var tasks = [],
         counter = 0;
 
@@ -92,6 +89,8 @@ var TaskPopUpLists = React.createClass({
     //ParentTaskId:TaskId:RequestId
     var id = "taskPane" + this.props.taskId;
 
+    var context = this.props.context;
+
     var tasks = this.props.keys.map(function(key, index) {
       var keySplit = key.split(':'),
           show = index ? "" : "in"
@@ -106,7 +105,7 @@ var TaskPopUpLists = React.createClass({
             </h4>
           </div>
           <div id={keySplit[2]} class="panel-collapse collapse {show}">
-            <TaskPopUpList taskKey={key} />
+            <TaskPopUpList taskKey={key} context={context} />
           </div>
         </div>
       )
@@ -131,15 +130,13 @@ var TaskPopUp = React.createClass({
       'min-width': '300px'
     }
 
-    console.log(this.props.taskNodeData);
-
     return (
       <div className="taskTable popover right" style={style}>
         <h3 className="popover-title">
           <b>Task Id:</b> {this.props.taskNodeData.task_id}
         </h3>
         <TaskPopUpLists keys={this.props.taskNodeData.keys} 
-          taskId={this.props.taskNodeData.task_id} />
+          taskId={this.props.taskNodeData.task_id} context={this.props.context} />
       </div>
     )
   }
@@ -148,6 +145,11 @@ var TaskPopUp = React.createClass({
 
 var track = function(address, requestid) {
   "use strict";
+
+  var context = new function() {
+    this.address = address;
+    this.requestId = requestid;
+  }
 
   var m = [10, 10, 10, 10],
     w = 2280 - m[1] - m[3],
@@ -171,7 +173,8 @@ var track = function(address, requestid) {
 
   $.ajax({
     // TODO: Pass in the url.
-    url: getTaskRequestGraphUrl(address, requestid),
+    url: Urls.getTaskRequestGraphUrl(context.address, context.requestId),
+
     success: function(data) {
 
       if (data.success) {
@@ -193,30 +196,40 @@ var track = function(address, requestid) {
     }.bind(this)
   });
 
-  function show(taskNodeId, taskNodeData) {
-    var taskPopUp = $("#" + taskNodeData.task_id);
-    if (taskPopUp.length !== 0) {
-      taskPopUp.remove();
-    } else {
-      var taskNode = d3.select(taskNodeId)[0][0].parentNode;
-      var selTaskNode = d3.select(taskNode);
-      var boundingRect = taskNode.getBoundingClientRect();
-      var position = d3.transform(selTaskNode.attr("transform")).translate;
-      var x0 = 70;
-      var y0 = 70;
-      if (d3.select(
-        selTaskNode[0][0].childNodes[0]).attr("text-anchor") !== "start") {
-        x0 += 60;
-      }
-
-      $("#taskContainer").append(
-        $('<div></div>').attr("id", taskNodeData.task_id)
-      );
-      React.renderComponent(
-        <TaskPopUp x={position[0] + x0} y={position[1] + y0}
-          taskNodeData={taskNodeData} />,
-        document.getElementById(taskNodeData.task_id));
+  function nodeStatus(taskNodeEntity) {
+    if (taskNodeEntity.status == 1) {
+      return "lightsteelblue";
+    } else if (taskNodeEntity.status == 2) {
+      return "blue";
     }
+    return "#fff";
+  }
+
+  function show(taskNodeEntity, taskNodeData) {
+    window.open(Urls.getTaskDetailPage(taskNodeData.task_id), "_blank");
+    //var taskPopUp = $("#" + taskNodeData.task_id);
+    //if (taskPopUp.length !== 0) {
+      //taskPopUp.remove();
+    //} else {
+      //var taskNode = d3.select(taskNodeEntity)[0][0].parentNode;
+      //var selTaskNode = d3.select(taskNode);
+      //var boundingRect = taskNode.getBoundingClientRect();
+      //var position = d3.transform(selTaskNode.attr("transform")).translate;
+      //var x0 = 70;
+      //var y0 = 70;
+      //if (d3.select(
+        //selTaskNode[0][0].childNodes[0]).attr("text-anchor") !== "start") {
+        //x0 += 60;
+      //}
+
+      //$("#taskContainer").append(
+        //$('<div></div>').attr("id", taskNodeData.task_id)
+      //);
+      //React.renderComponent(
+        //<TaskPopUp x={position[0] + x0} y={position[1] + y0}
+          //taskNodeData={taskNodeData} context={context} />,
+        //document.getElementById(taskNodeData.task_id));
+    //}
   }
 
   function update(root, source) {
@@ -258,7 +271,7 @@ var track = function(address, requestid) {
 
     nodeEnter.append("svg:circle")
         .attr("r", 1e-6)
-        .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; })
+        .style("fill", nodeStatus)
         .on("click", function(d) { show(this, d); });
 
     // Transition nodes to their new position.
@@ -268,7 +281,7 @@ var track = function(address, requestid) {
 
     nodeUpdate.select("circle")
         .attr("r", 4.5)
-        .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+        .style("fill", nodeStatus);
 
     nodeUpdate.select("text")
         .style("fill-opacity", 1);

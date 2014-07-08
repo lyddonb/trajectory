@@ -19,7 +19,6 @@ func NewTaskServices(taskAPI *api.TaskAPI) *TaskServices {
 
 func (s *TaskServices) addTask(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	//var item map[string]string
 	var taskJson map[string]*json.RawMessage
 
 	err := decoder.Decode(&taskJson)
@@ -75,6 +74,19 @@ func (s *TaskServices) getTaskKeysForRequests(w http.ResponseWriter, r *http.Req
 	}
 
 	taskKeys, err := s.api.ListRequestTaskKeys(requestid)
+
+	SendJsonResponse(w, taskKeys, err)
+}
+
+func (s *TaskServices) getTaskKeysForTask(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	taskid := params["taskid"]
+
+	if taskid == "" {
+		SendJsonErrorResponse(w, nil, "No task id passed in.")
+	}
+
+	taskKeys, err := s.api.ListTaskKeys(taskid)
 
 	SendJsonResponse(w, taskKeys, err)
 }

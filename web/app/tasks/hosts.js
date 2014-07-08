@@ -46,11 +46,11 @@ var Hosts = React.createClass({
 
 var HostsList = React.createClass({
   render: function() {
-    var hostNodes = Object.keys(this.props.data).map(function (host, index) {
+    var hostNodes = this.props.data.map(function(host, index) {
       // TODO: Convert to link node.
-      var url = "#/tasks/" + host;
+      var url = "#/tasks/" + host.Key;
 
-      return <div><a href={url}>{host}</a></div>;
+      return <div><a href={url}>{host.Key}</a></div>;
     });
 
     return <div className="machineList col-md-2">
