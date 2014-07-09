@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/lyddonb/trajectory/api"
 	"github.com/lyddonb/trajectory/db"
 )
@@ -53,11 +52,11 @@ func (s *TaskServices) getAllAddresses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *TaskServices) getRequestsForAddress(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	address := params["address"]
+	address := r.URL.Query().Get(":address")
 
 	if address == "" {
 		SendJsonErrorResponse(w, nil, "No address passed in.")
+		return
 	}
 
 	requests, err := s.api.ListRequests(address)
@@ -66,11 +65,11 @@ func (s *TaskServices) getRequestsForAddress(w http.ResponseWriter, r *http.Requ
 }
 
 func (s *TaskServices) getTaskKeysForRequests(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	requestid := params["requestid"]
+	requestid := r.URL.Query().Get(":requestid")
 
 	if requestid == "" {
 		SendJsonErrorResponse(w, nil, "No request id passed in.")
+		return
 	}
 
 	taskKeys, err := s.api.ListRequestTaskKeys(requestid)
@@ -79,11 +78,11 @@ func (s *TaskServices) getTaskKeysForRequests(w http.ResponseWriter, r *http.Req
 }
 
 func (s *TaskServices) getTaskKeysForTask(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	taskid := params["taskid"]
+	taskid := r.URL.Query().Get(":taskid")
 
 	if taskid == "" {
 		SendJsonErrorResponse(w, nil, "No task id passed in.")
+		return
 	}
 
 	taskKeys, err := s.api.ListTaskKeys(taskid)
@@ -92,11 +91,11 @@ func (s *TaskServices) getTaskKeysForTask(w http.ResponseWriter, r *http.Request
 }
 
 func (s *TaskServices) getTaskGraphForRequest(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	requestid := params["requestid"]
+	requestid := r.URL.Query().Get(":requestid")
 
 	if requestid == "" {
 		SendJsonErrorResponse(w, nil, "No request id passed in.")
+		return
 	}
 
 	graph, err := s.api.GetRequestTaskGraph(requestid)
@@ -109,11 +108,11 @@ func (s *TaskServices) getAllTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *TaskServices) getTaskByKey(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	taskKey := params["taskKey"]
+	taskKey := r.URL.Query().Get(":taskKey")
 
 	if taskKey == "" {
 		SendJsonErrorResponse(w, nil, "No task key passed in.")
+		return
 	}
 
 	task, err := s.api.GetTaskForKey(taskKey)

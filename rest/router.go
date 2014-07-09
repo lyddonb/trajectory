@@ -1,7 +1,9 @@
 package rest
 
 import (
-	"github.com/gorilla/mux"
+	"net/http"
+
+	"github.com/bmizerany/pat"
 	"github.com/lyddonb/trajectory/api"
 	"github.com/lyddonb/trajectory/db"
 )
@@ -14,46 +16,48 @@ func SetupStats(pool db.DBPool) *StatServices {
 	return NewStatServices(api.NewStatAPI(pool))
 }
 
-func SetupTaskRouter(pool db.DBPool, prefix string, writeToFile bool) *mux.Router {
-	router := mux.NewRouter()
+type RestMiddleware func(http.HandlerFunc, ...func(http.HandlerFunc) http.HandlerFunc) http.HandlerFunc
+
+func SetupTaskRouter(pool db.DBPool, prefix string, writeToFile bool, middleware RestMiddleware) *pat.PatternServeMux {
+	router := pat.New()
 
 	taskServices := SetupTasks(pool)
 
+	router.Get(prefix+"addresses", middleware(taskServices.getAllAddresses))
+	router.Get(prefix+"addresses/:address/requests",
+		middleware(taskServices.getRequestsForAddress))
+	router.Get(prefix+"addresses/:address/requests/:requestid/tasks",
+		middleware(taskServices.getTaskKeysForRequests))
+	router.Get(prefix+"addresses/:address/requests/:requestid/taskgraph",
+		middleware(taskServices.getTaskGraphForRequest))
+	router.Get(prefix+"task/:taskKey", middleware(taskServices.getTaskByKey))
+	router.Get(prefix+"tasks/:taskid",
+		middleware(taskServices.getTaskKeysForTask))
+
 	if writeToFile {
-		router.HandleFunc(prefix, taskServices.addTaskToFile).Methods("POST")
+		//router.HandleFunc(prefix, middleware(taskServices.addTaskToFile)).Methods("POST")
+		router.Post(prefix, middleware(taskServices.addTaskToFile))
 	} else {
-		router.HandleFunc(prefix, taskServices.addTask).Methods("POST")
+		router.Post(prefix, http.HandlerFunc(taskServices.addTask))
 	}
-	router.HandleFunc(prefix, taskServices.addTask).Methods("POST")
-	router.HandleFunc(prefix, taskServices.getAllTasks).Methods("GET")
-	router.HandleFunc(prefix+"addresses",
-		taskServices.getAllAddresses).Methods("GET")
-	router.HandleFunc(prefix+"addresses/{address}/requests",
-		taskServices.getRequestsForAddress).Methods("GET")
-	router.HandleFunc(prefix+"addresses/{address}/requests/{requestid}/tasks",
-		taskServices.getTaskKeysForRequests).Methods("GET")
-	router.HandleFunc(prefix+"addresses/{address}/requests/{requestid}/taskgraph",
-		taskServices.getTaskGraphForRequest).Methods("GET")
-	router.HandleFunc(prefix+"task/{taskKey}",
-		taskServices.getTaskByKey).Methods("GET")
-	router.HandleFunc(prefix+"tasks/{taskid}",
-		taskServices.getTaskKeysForTask).Methods("GET")
+	router.Post(prefix, http.HandlerFunc(taskServices.addTask))
+	router.Get(prefix, middleware(taskServices.getAllTasks))
 
 	return router
 }
 
-func SetupStatRouter(pool db.DBPool, prefix string, writeToFile bool) *mux.Router {
-	router := mux.NewRouter()
+func SetupStatRouter(pool db.DBPool, prefix string, writeToFile bool, middleware RestMiddleware) *pat.PatternServeMux {
+	router := pat.New()
 
 	statServices := SetupStats(pool)
 
+	router.Get(prefix+":requestId", middleware(statServices.getStatByRequestId))
 	if writeToFile {
-		router.HandleFunc(prefix, statServices.addStatToFile).Methods("POST")
+		router.Post(prefix, http.HandlerFunc(statServices.addStatToFile))
 	} else {
-		router.HandleFunc(prefix, statServices.addStat).Methods("POST")
+		router.Post(prefix, http.HandlerFunc(statServices.addStat))
 	}
-	router.HandleFunc(prefix, statServices.getAllStats).Methods("GET")
-	router.HandleFunc(prefix+"{requestId}", statServices.getStatByRequestId).Methods("GET")
+	router.Get(prefix, middleware(statServices.getAllStats))
 
 	return router
 }

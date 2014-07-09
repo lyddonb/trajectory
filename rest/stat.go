@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"github.com/gorilla/mux"
 	"github.com/lyddonb/trajectory/api"
 )
 
@@ -53,8 +51,7 @@ func (s *StatServices) getAllStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *StatServices) getStatByRequestId(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	requestId := params["requestId"]
+	requestId := r.URL.Query().Get(":requestId")
 
 	if requestId == "" {
 		SendJsonErrorResponse(w, nil, "No request id passed in.")
