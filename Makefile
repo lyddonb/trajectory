@@ -39,7 +39,7 @@ buildjs:
 buildcss:
 	lessc web/less/*.less > web/css/main.css
 
-build: installjsdeps buildjs buildcss
+buildall: installjsdeps buildjs buildcss
 	go build
 
 installjsdeps:
