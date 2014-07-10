@@ -45,6 +45,7 @@ buildall: installjsdeps buildjs buildcss
 installjsdeps:
 	npm install .
 	npm install -g browserify
+	npm install -g less
 
 #buildjs: $(app_bundle)
 
