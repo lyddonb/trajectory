@@ -40,12 +40,15 @@ buildcss:
 	lessc web/less/*.less > web/css/main.css
 
 buildall: installjsdeps buildjs buildcss
-	go build
+	apt-get install go build
 
 installjsdeps:
 	npm install .
 	npm install -g browserify
 	npm install -g less
+
+dockerrun: 
+	./trajectory --redis-port=$(REDIS_PORT_6379_TCP_PORT)
 
 #buildjs: $(app_bundle)
 

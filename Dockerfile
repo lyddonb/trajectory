@@ -42,7 +42,7 @@ WORKDIR /root/go/src/github.com/lyddonb/trajectory
 
 RUN make buildall
 
-CMD ["./trajectory"]
+CMD ["make", "dockerrun"]
 
 #EXPOSE 4180
 EXPOSE 1301
