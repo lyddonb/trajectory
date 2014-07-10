@@ -33,6 +33,7 @@ RUN wget http://golang.org/dl/go$GO_VERSION.$OS-$ARCH.tar.gz --no-check-certific
 
 RUN tar -C /usr/local -xzf go$GO_VERSION.$OS-$ARCH.tar.gz
 
+#RUN mkdir -p $TRAJ
 RUN go get $TRAJ
 
 WORKDIR /root/go/src/github.com/lyddonb/trajectory
