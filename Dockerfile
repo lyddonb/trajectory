@@ -1,11 +1,12 @@
 FROM ubuntu
 
-RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
+#RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
 
 RUN apt-get -y update
 RUN apt-get -y upgrade
 
 RUN apt-get install -y --force-yes \
+    software-properties-common \
     python-software-properties \
     python \
     build-essential \
@@ -33,12 +34,13 @@ RUN wget http://golang.org/dl/go$GO_VERSION.$OS-$ARCH.tar.gz --no-check-certific
 
 RUN tar -C /usr/local -xzf go$GO_VERSION.$OS-$ARCH.tar.gz
 
-#RUN mkdir -p $TRAJ
+WORKDIR /root/go
+
 RUN go get $TRAJ
 
 WORKDIR /root/go/src/github.com/lyddonb/trajectory
 
-RUN make buildjs
+RUN make buildall
 
 CMD ["./trajectory"]
 

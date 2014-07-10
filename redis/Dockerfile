@@ -1,13 +1,14 @@
 FROM ubuntu
 
-RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
+#RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
 
 RUN apt-get -y update
 RUN apt-get -y upgrade
 
-RUN apt-get install -y wget
-RUN apt-get install -y g++
-RUN apt-get install -y make
+RUN apt-get install -y --force-yes build-essential
+RUN apt-get install -y --force-yes wget
+RUN apt-get install -y --force-yes g++
+RUN apt-get install -y --force-yes make
 
 # REDIS Install
 RUN wget http://download.redis.io/releases/redis-2.8.8.tar.gz --no-check-certificate

@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +19,13 @@ import (
 const (
 	TASK_PREFIX = "/api/tasks/"
 	STAT_PREFIX = "/api/stats/"
+)
+
+var (
+	redisPort       = flag.String("redis-port", "6379", "Port that redis is hosted on.")
+	redisHost       = flag.String("redis-host", "127.0.0.1", "Host address that redis is hosted on.")
+	tcpListenerPort = flag.String("listener-port", "1300", "Port the tcp listener is listening on.")
+	webHostPort     = flag.String("web-host-port", "3000", "Port the web application is exposed on.")
 )
 
 type LoginConfig struct {
@@ -98,13 +106,15 @@ func setupWeb() {
 }
 
 func main() {
-	// TODO: Take in addresses/ports from args
+	flag.Parse()
 
 	// Stand up redis pool.
-	pool := db.StartDB("127.0.0.1:6379", "")
+	pool := db.StartDB(*redisHost+":"+*redisPort, "")
+
+	fmt.Println(":" + *tcpListenerPort)
 
 	go func() {
-		listener := pipe.MakeConnection("tcp", ":1300")
+		listener := pipe.MakeConnection("tcp", ":"+*tcpListenerPort)
 		taskPipeline := pipe.NewTaskPipeline(pool)
 		pipe.Listen(listener, taskPipeline)
 	}()
@@ -115,6 +125,6 @@ func main() {
 	setupTasks(pool, writeToFile)
 	setupWeb()
 
-	fmt.Println("Listen on 3000")
-	http.ListenAndServe(":3000", nil)
+	fmt.Println("Listen on :", *webHostPort)
+	http.ListenAndServe(":"+*webHostPort, nil)
 }
