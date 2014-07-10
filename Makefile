@@ -8,11 +8,19 @@ buildredis:
 runredis:
 	docker run --name redis -d -p 6379:6379 lyddonb/redis
 
-build:
+killredis:
+	docker stop redis
+	docker rm redis
+
+buildtrajectory:
 	docker build -t lyddonb/trajectory .
 
-run:
-	docker run --link redis:db -i -t lyddonb/trajectory /bin/bash
+runtrajectory:
+	docker run --name trajectory -i -t --link redis:redis -d -p 1301:1301 -p 3001:3001 lyddonb/trajectory /bin/bash
+
+killtrajectory:
+	docker stop trajectory
+	docker rm trajectory
 
 rundebug:
 	docker run -v /vagrant:/opt/go/src/github.com/lyddonb/trajectory --link redis:db -i -t lyddonb/trajectory /bin/bash 
@@ -30,6 +38,13 @@ buildjs:
 
 buildcss:
 	lessc web/less/*.less > web/css/main.css
+
+build: installjsdeps buildjs buildcss
+	go build
+
+installjsdeps:
+	npm install .
+	npm install -g browserify
 
 #buildjs: $(app_bundle)
 

@@ -5,31 +5,42 @@ RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt
 RUN apt-get -y update
 RUN apt-get -y upgrade
 
-RUN apt-get install -y wget
-RUN apt-get install -y git
-RUN apt-get install -y make
+RUN apt-get install -y --force-yes \
+    python-software-properties \
+    python \
+    build-essential \
+    wget \
+    git-core 
 
+RUN add-apt-repository ppa:chris-lea/node.js
+RUN apt-get -y update
+RUN apt-get install -y --force-yes nodejs
 
-# GO Install
-RUN wget https://go.googlecode.com/files/go1.2.1.linux-amd64.tar.gz --no-check-certificate
+ENV GO_VERSION 1.3
+ENV OS linux
+ENV ARCH amd64
 
-RUN tar -C /usr/local -xzf go1.2.1.linux-amd64.tar.gz
-
+ENV HOME /root
 ENV GOROOT /usr/local/go
+ENV GOPATH $HOME/go
+ENV PATH $PATH:$GOROOT/bin:$GOPATH/bin:$GOPATH
 
-RUN mkdir -p /opt/go/trajectory/{bin, src, pkg}
-RUN mkdir -p /opt/go/trajectory/src/github.com/lyddonb
+ENV TRAJ github.com/lyddonb/trajectory
 
-ENV GOPATH /opt/go
-ENV GOBIN /opt/go/bin
-ENV PATH $PATH:/opt/go/bin:/usr/local/go/bin
+RUN mkdir -p $GOPATH
 
-ADD . /opt/go/src/github.com/lyddonb/trajectory
-WORKDIR /opt/go/src/github.com/lyddonb/trajectory
+RUN wget http://golang.org/dl/go$GO_VERSION.$OS-$ARCH.tar.gz --no-check-certificate
 
-RUN go get github.com/garyburd/redigo/redis
-RUN go install trajectory.go
+RUN tar -C /usr/local -xzf go$GO_VERSION.$OS-$ARCH.tar.gz
 
-EXPOSE 1200
+RUN go get $TRAJ
 
-ENTRYPOINT ["/opt/trajectory/bin/trajectory"]
+WORKDIR /root/go/src/github.com/lyddonb/trajectory
+
+RUN make buildjs
+
+CMD ["./trajectory"]
+
+#EXPOSE 4180
+EXPOSE 1301
+EXPOSE 3001

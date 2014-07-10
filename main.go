@@ -98,6 +98,8 @@ func setupWeb() {
 }
 
 func main() {
+	// TODO: Take in addresses/ports from args
+
 	// Stand up redis pool.
 	pool := db.StartDB("127.0.0.1:6379", "")
 
@@ -113,5 +115,6 @@ func main() {
 	setupTasks(pool, writeToFile)
 	setupWeb()
 
+	fmt.Println("Listen on 3000")
 	http.ListenAndServe(":3000", nil)
 }
