@@ -16,14 +16,14 @@ buildtrajectory:
 	docker build -t lyddonb/trajectory .
 
 runtrajectory:
-	docker run --name trajectory -i -t --link redis:redis -d -p 1301:1301 -p 3001:3001 lyddonb/trajectory /bin/bash
+	docker run --name trajectory --link redis:redis -d -p 1300:1300 -p 3000:3000 lyddonb/trajectory
 
 killtrajectory:
 	docker stop trajectory
 	docker rm trajectory
 
-rundebug:
-	docker run -v /vagrant:/opt/go/src/github.com/lyddonb/trajectory --link redis:db -i -t lyddonb/trajectory /bin/bash 
+runtrajectorydebug:
+	docker run --name trajectory -i -t --link redis:redis -p 1300:1300 -p 3000:3000 lyddonb/trajectory /bin/bash
 
 deps:
 	go get github.com/garyburd/redigo/redis
@@ -40,7 +40,7 @@ buildcss:
 	lessc web/less/*.less > web/css/main.css
 
 buildall: installjsdeps buildjs buildcss
-	apt-get install go build
+	go build
 
 installjsdeps:
 	npm install .
