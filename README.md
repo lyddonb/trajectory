@@ -65,3 +65,50 @@ Create a login.json file with login info:
     "Password": "pwd"
   }
 ]
+
+
+
+#### Running Local (Redis in vagrant)
+
+
+##### Start Redis in Vagrant
+
+```
+vagrant up
+```
+
+```
+vagrant ssh
+```
+
+```
+cd /vagrant
+```
+
+```
+sudo make buildredis
+```
+
+```
+sudo make runredis
+```
+
+```
+exit
+```
+
+##### Local Build of JS/CSS
+
+```
+make buildjs
+```
+
+```
+make buildcss
+```
+
+##### Local Build of JS/CSS
+
+```
+go run main.go
+```
