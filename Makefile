@@ -48,7 +48,7 @@ installjsdeps:
 	npm install -g less
 
 dockerrun: 
-	./trajectory --redis-port=$(REDIS_PORT_6379_TCP_PORT)
+	./trajectory --redis-port=$(REDIS_PORT_6379_TCP_PORT) --redis-host=$(REDIS_PORT_6379_TCP_ADDR)
 
 #buildjs: $(app_bundle)
 
