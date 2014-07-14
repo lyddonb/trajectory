@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
 	"github.com/lyddonb/trajectory/api"
 )
 
@@ -16,6 +17,7 @@ func NewStatServices(statAPI *api.StatAPI) *StatServices {
 }
 
 func (s *StatServices) addStat(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("New Stat")
 	decoder := json.NewDecoder(r.Body)
 
 	var statJson map[string]*json.RawMessage

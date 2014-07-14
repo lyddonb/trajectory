@@ -108,10 +108,10 @@ func setupWeb() {
 func main() {
 	flag.Parse()
 
+	fmt.Println("Redis connection: ", *redisHost, *redisPort)
+
 	// Stand up redis pool.
 	pool := db.StartDB(*redisHost+":"+*redisPort, "")
-
-	fmt.Println(":" + *tcpListenerPort)
 
 	go func() {
 		listener := pipe.MakeConnection("tcp", ":"+*tcpListenerPort)
