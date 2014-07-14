@@ -44,3 +44,24 @@ git clone git@github.com:lyddonb/trajectory.git
 cd trajectory
 
 go get ./...
+
+
+
+Web Environment
+---------------
+
+#### Install Node
+
+Install from http://nodejs.org/
+
+make buildall
+
+
+Create a login.json file with login info:
+
+[
+  {
+    "Username": "uname",
+    "Password": "pwd"
+  }
+]
