@@ -32,18 +32,19 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH:$GOPATH/bin
 
 #### Add trajectory
 
+```
 mkdir -p $GOPATH/src/github.com/yourusername/
-
 cd $GOPATH/src/github.com/yourusername
-
 git clone git@github.com:lyddonb/trajectory.git
+```
 
 
 #### Install the trajectory deps
 
+```
 cd trajectory
-
 go get ./...
+```
 
 
 
@@ -54,17 +55,21 @@ Web Environment
 
 Install from http://nodejs.org/
 
+```
 make buildall
+```
 
 
 Create a login.json file with login info:
 
+```
 [
   {
     "Username": "uname",
     "Password": "pwd"
   }
 ]
+```
 
 
 
@@ -75,25 +80,10 @@ Create a login.json file with login info:
 
 ```
 vagrant up
-```
-
-```
 vagrant ssh
-```
-
-```
 cd /vagrant
-```
-
-```
 sudo make buildredis
-```
-
-```
 sudo make runredis
-```
-
-```
 exit
 ```
 
@@ -101,9 +91,6 @@ exit
 
 ```
 make buildjs
-```
-
-```
 make buildcss
 ```
 
