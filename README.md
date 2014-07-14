@@ -18,16 +18,22 @@ Create a directory to house your go projects.
 
 For example
 
+```
 mkdir -p $HOME/go
+```
 
 In your profile (bashrc, bash_profile, etc) setup your environment variables
 
+```
 export GOROOT=/usr/local/go
 export GOPATH=$HOME/go
+```
 
 Get Go and it's bin directorys in your path
 
+```
 export PATH=$PATH:$GOROOT/bin:$GOPATH:$GOPATH/bin
+```
 
 
 #### Add trajectory
@@ -94,7 +100,7 @@ make buildjs
 make buildcss
 ```
 
-##### Local Build of JS/CSS
+##### Run go server
 
 ```
 go run main.go
