@@ -12,4 +12,5 @@ const (
 	STAT_NAME         = "stat_name"
 	STATUS_CODE       = "status_code"
 	CONTEXT_ID        = "context_id"
+	LATENCY           = "gae_latency_seconds"
 )

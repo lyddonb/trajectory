@@ -240,6 +240,53 @@ var track = function(address, requestid) {
     return false;
   }
 
+  function nodeLatencyStroke(taskNodeEntity) {
+    console.log(taskNodeEntity);
+    if (taskNodeEntity.latency > 100) {
+      return "2";
+    } else if (taskNodeEntity.status > 50) {
+      return "1";
+    }
+    return ".5";
+  }
+
+  function nodeLatencySize(taskNodeEntity) {
+    console.log(taskNodeEntity);
+    if (taskNodeEntity.latency > 100) {
+      return 5.5;
+    } else if (taskNodeEntity.status > 50) {
+      return 5;
+    } else if (taskNodeEntity.status > 10) {
+      return 4.5;
+    } else if (taskNodeEntity.status > 5) {
+      return 4;
+    }
+    return 3.5;
+  }
+
+  function nodeLatencyColor(taskNodeEntity) {
+    console.log(taskNodeEntity);
+    if (taskNodeEntity.latency > 100) {
+      return "red";
+    } else if (taskNodeEntity.status > 50) {
+      return "orange";
+    } else if (taskNodeEntity.status > 10) {
+      return "black";
+    } else if (taskNodeEntity.status > 5) {
+      return "#333";
+    }
+    return "lightsteelblue";
+  }
+
+
+  function setNodeSizeColor(node) {
+    node.attr("r", nodeLatencySize)
+      .style("stroke", nodeLatencyColor)
+      .style("stroke-width", nodeLatencyStroke);
+
+    node.style("fill", nodeStatus);
+  }
+
   function update(root, source, reload) {
     var duration = d3.event && d3.event.altKey ? 5000 : 500;
 
@@ -317,9 +364,11 @@ var track = function(address, requestid) {
         .duration(duration)
         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
-    nodeUpdate.select("circle")
-        .attr("r", 4.5)
-        .style("fill", nodeStatus);
+    setNodeSizeColor(nodeUpdate.select("circle"));
+        //.attr("r", 4.5)
+        //.style("stroke", "#666")
+        //.style("stroke-width", ".5")
+        //.style("fill", nodeStatus);
 
     nodeUpdate.select("text")
         .style("fill-opacity", 1);

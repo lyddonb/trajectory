@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/lyddonb/trajectory/db"
@@ -17,6 +18,8 @@ type Node struct {
 	Keys        []string `json:"keys"` // Handles multiple runs of the same task
 	IsParent    bool     `json:"is_parent"`
 	Status      int      `json:"status"`
+	Latency     float64  `json:"latency"`
+	task        *db.Task
 }
 
 //func (n *Node) MarshalJSON() ([]byte, error) {
@@ -102,18 +105,19 @@ func (a *TaskAPI) SetTaskInfo(taskKey string, node *Node) {
 	// Load the task and pass it into the channel.
 	task, err := a.dal.GetTaskForKey(taskKey)
 
-	if task.Key() != taskKey {
-		fmt.Println(task.Key())
-		fmt.Println(taskKey)
-		fmt.Println(task)
-		//task[db.TASK_ID]
-	}
-
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	node.Name = task[db.URL]
+	node.task = &task
+	latency, err := strconv.ParseFloat(task[db.LATENCY], 64)
+
+	if err != nil {
+		fmt.Println("Error parsing latency: ", err)
+	} else {
+		node.Latency = latency
+	}
 
 	status := 0
 	if val, ok := task[db.STATUS_CODE]; ok {
@@ -213,6 +217,8 @@ func BuildParentNode(requestId string) *Node {
 		[]string{},
 		true,
 		0,
+		0,
+		nil,
 	}
 }
 
@@ -228,6 +234,8 @@ func BuildChildNode(taskId, taskKey, contextId string,
 		[]string{taskKey},
 		false,
 		0,
+		0,
+		nil,
 	}
 }
 
