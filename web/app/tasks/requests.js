@@ -1,10 +1,7 @@
 /** @jsx React.DOM */
 
 var React = require('react');
-
-// TODO: Get a decent config.
-var BaseTaskAddressUrl = "http://localhost:3000/api/tasks/addresses/";
-var RequestUrl = "/requests"
+var Urls = require('../urls');
 
 function getHostUrl() {
   return location.origin + "#/tasks";
@@ -13,7 +10,7 @@ function getHostUrl() {
 var HostRequests = React.createClass({
 
   loadHostRequestsFromServer: function() {
-    url = BaseTaskAddressUrl + this.props.host + RequestUrl;
+    url = Urls.getTaskHostUrl(this.props.host);
 
     $.ajax({
       url: url,

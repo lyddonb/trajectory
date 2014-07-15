@@ -1,11 +1,12 @@
-
+var PORT = "3000"
 
 var Urls = new function() {
   "use strict";
 
-  this.host = "http://localhost:3000";
-  this.api = this.host + "/api";
-  this.web = this.host + "/#"
+  this.host = location.origin;
+  this.api_host = location.origin;
+  this.api = this.api_host + "/api";
+  this.web = this.host + "/#";
 
   this.getTaskRequestGraphUrl = function(address, request) {
     return this.api + "/tasks/addresses/" + address + "/requests/" +
@@ -26,6 +27,14 @@ var Urls = new function() {
 
   this.getTaskDetailPage = function(taskId) {
     return this.web + "/tasks/" + taskId + "/detail";
+  };
+
+  this.getTaskAddressUrl = function() {
+    return this.api + "/tasks/addresses";
+  };
+
+  this.getTaskHostUrl = function(host) {
+    return this.api + "/tasks/addresses/" + host + "/requests";
   };
 
 }();

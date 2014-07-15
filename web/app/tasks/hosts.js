@@ -1,13 +1,12 @@
 /** @jsx React.DOM */
 
 var React = require('react');
-
-var TaskAddressUrl = "http://localhost:3000/api/tasks/addresses"; 
+var Urls = require('../urls');
 
 var Hosts = React.createClass({
   loadHostsFromServer: function() {
     $.ajax({
-      url: TaskAddressUrl,
+      url: Urls.getTaskAddressUrl(),
       success: function(data) {
         // TODO: Make this a default handler.
         if (data.success) {
