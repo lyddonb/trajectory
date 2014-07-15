@@ -232,22 +232,39 @@ var track = function(address, requestid) {
     //}
   }
 
-  function update(root, source) {
+  function parentsOk(d) {
+    if (d.parent !== undefined && d.parent !== null && 
+        d.parent.children !== undefined && d.parent.children !== null) {
+      return true;
+    }
+    return false;
+  }
+
+  function update(root, source, reload) {
     var duration = d3.event && d3.event.altKey ? 5000 : 500;
 
-    // Compute the new tree layout.
-    var nodes = tree.nodes(root);
-
+    //Compute the new tree layout.
+    var nodes = tree.nodes(root).reverse();
+  
     // Normalize for fixed-depth.
-    nodes.forEach(function(d) { 
-      d.y = d.depth * 30; 
+    nodes.forEach(function(d) { d.y = d.depth * 30; });
 
-      if (d.parent !== undefined && d.parent !== null) {
-        if (d.parent.children.length > 1) {
-          d.y += d.parent.children.indexOf(d) * 15;
-        }
-      }
-    });
+    // Compute the new tree layout.
+    //var nodes = tree.nodes(root);
+
+    //// Normalize for fixed-depth.
+    //nodes.forEach(function(d) { 
+      //d.y = d.depth * 30; 
+
+      //if (d.parent !== undefined && d.parent !== null && 
+          //d.parent.children !== undefined && d.parent.children !== null) {
+        //if (d.parent.children.length > 1) {
+          //d.y += d.parent.children.indexOf(d) * 15;
+        //}
+      //} else {
+        //d.y += 15;
+      //}
+    //});
 
     // Update the nodes…
     var node = vis.selectAll("g.node")
@@ -258,12 +275,31 @@ var track = function(address, requestid) {
         //.attr("id", function(d) { return d.id; })
         .attr("class", "node")
         .attr("transform", function(d) { return "translate(" + source.x0 + "," + source.y0 + ")"; });
-
+        //.on("click", function(d) { toggle(d); update(d); });
+        //
     nodeEnter.append("svg:text")
-        .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+        .attr("x", function(d) { return d.children || d._children ? -3 : 3; })
         .attr("dy", ".35em")
+        .attr("y", 8)
         .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
-        .text(function(d) { return d.name; })
+        .text(function(d) { 
+          if (parentsOk(d)) {
+            if (d.parent.children.length < 4) {
+              if (parentsOk(d.parent)) {
+                if (d.parent.parent.children.length < 4) {
+                    var nameSplit = d.name.split(".");
+                    return nameSplit[nameSplit.length - 1]; 
+                  }
+              } else {
+                var nameSplit = d.name.split(".");
+                return nameSplit[nameSplit.length - 1]; 
+              }
+            }
+          }
+
+          return "";
+ 
+        })
         .style("fill-opacity", 1e-6);
 
     nodeEnter.append("svg:title")
@@ -272,7 +308,9 @@ var track = function(address, requestid) {
     nodeEnter.append("svg:circle")
         .attr("r", 1e-6)
         .style("fill", nodeStatus)
-        .on("click", function(d) { show(this, d); });
+        .on("click", function(d) { 
+          show(this, d); 
+        });
 
     // Transition nodes to their new position.
     var nodeUpdate = node.transition()

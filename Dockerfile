@@ -34,7 +34,7 @@ RUN wget http://golang.org/dl/go$GO_VERSION.$OS-$ARCH.tar.gz --no-check-certific
 
 RUN tar -C /usr/local -xzf go$GO_VERSION.$OS-$ARCH.tar.gz
 
-WORKDIR /root/go
+WORKDIR /root/go/src
 
 RUN go get $TRAJ
 
@@ -42,8 +42,10 @@ WORKDIR /root/go/src/github.com/lyddonb/trajectory
 
 RUN make buildall
 
+ADD login.json /root/go/src/github.com/lyddonb/trajectory/login.json
+
 CMD ["make", "dockerrun"]
 
 #EXPOSE 4180
-EXPOSE 1301
-EXPOSE 3001
+EXPOSE 1300
+EXPOSE 3000

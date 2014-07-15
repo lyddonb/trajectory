@@ -11,4 +11,5 @@ const (
 	URL               = "url"
 	STAT_NAME         = "stat_name"
 	STATUS_CODE       = "status_code"
+	CONTEXT_ID        = "context_id"
 )

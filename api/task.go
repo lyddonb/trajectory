@@ -91,6 +91,15 @@ func (a *TaskAPI) SaveTask(task db.Task) (string, error) {
 		task[db.TASK_ID] = splitKey[2]
 	}
 
+	splitTaskId := strings.Split(task[db.TASK_ID], "|")
+	task[db.TASK_ID] = splitTaskId[0]
+
+	if len(splitTaskId) == 2 {
+		task[db.CONTEXT_ID] = splitTaskId[1]
+	} else {
+		task[db.CONTEXT_ID] = ""
+	}
+
 	return a.dal.SaveTask(task)
 }
 
