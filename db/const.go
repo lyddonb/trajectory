@@ -13,4 +13,5 @@ const (
 	STATUS_CODE       = "status_code"
 	CONTEXT_ID        = "context_id"
 	LATENCY           = "gae_latency_seconds"
+	RUN_TIME          = "run_time"
 )

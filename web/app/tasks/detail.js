@@ -133,7 +133,7 @@ var TaskRequestItem = React.createClass({
 
 
 var buildFormGroup = function(prop, value) {
-  if (prop == "ran" || prop == "task_eta") {
+  if (prop == "ran" || prop == "task_eta" || prop == "end") {
     var date = new Date(value*1000);
     var hours = date.getHours();
     var minutes = date.getMinutes();

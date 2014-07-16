@@ -19,6 +19,7 @@ type Node struct {
 	IsParent    bool     `json:"is_parent"`
 	Status      int      `json:"status"`
 	Latency     float64  `json:"latency"`
+	RunTime     float64  `json:"run_time"`
 	task        *db.Task
 }
 
@@ -101,6 +102,17 @@ func (a *TaskAPI) ProcessTaskKeys(requestId string, taskKeys map[string]int,
 	return parent
 }
 
+func GetStatFromTask(task db.Task, prop string) float64 {
+	stat, err := strconv.ParseFloat(task[prop], 64)
+
+	if err != nil {
+		fmt.Println("Error parsing ", prop, err)
+		return 0
+	}
+
+	return stat
+}
+
 func (a *TaskAPI) SetTaskInfo(taskKey string, node *Node) {
 	// Load the task and pass it into the channel.
 	task, err := a.dal.GetTaskForKey(taskKey)
@@ -111,13 +123,8 @@ func (a *TaskAPI) SetTaskInfo(taskKey string, node *Node) {
 
 	node.Name = task[db.URL]
 	node.task = &task
-	latency, err := strconv.ParseFloat(task[db.LATENCY], 64)
-
-	if err != nil {
-		fmt.Println("Error parsing latency: ", err)
-	} else {
-		node.Latency = latency
-	}
+	node.Latency = GetStatFromTask(task, db.LATENCY)
+	node.RunTime = GetStatFromTask(task, db.RUN_TIME)
 
 	status := 0
 	if val, ok := task[db.STATUS_CODE]; ok {
@@ -218,6 +225,7 @@ func BuildParentNode(requestId string) *Node {
 		true,
 		0,
 		0,
+		0,
 		nil,
 	}
 }
@@ -233,6 +241,7 @@ func BuildChildNode(taskId, taskKey, contextId string,
 		children,
 		[]string{taskKey},
 		false,
+		0,
 		0,
 		0,
 		nil,

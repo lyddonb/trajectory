@@ -196,15 +196,6 @@ var track = function(address, requestid) {
     }.bind(this)
   });
 
-  function nodeStatus(taskNodeEntity) {
-    if (taskNodeEntity.status == 1) {
-      return "lightsteelblue";
-    } else if (taskNodeEntity.status == 2) {
-      return "blue";
-    }
-    return "#fff";
-  }
-
   function show(taskNodeEntity, taskNodeData) {
     window.open(Urls.getTaskDetailPage(taskNodeData.task_id), "_blank");
     //var taskPopUp = $("#" + taskNodeData.task_id);
@@ -241,50 +232,81 @@ var track = function(address, requestid) {
   }
 
   function nodeLatencyStroke(taskNodeEntity) {
-    console.log(taskNodeEntity);
-    if (taskNodeEntity.latency > 100) {
-      return "2";
-    } else if (taskNodeEntity.status > 50) {
+    if (taskNodeEntity.latency > 120) {
+      return "2.5";
+    } else if (taskNodeEntity.latency > 60) {
+      return "1.5";
+    } else if (taskNodeEntity.latency > 10) {
       return "1";
     }
     return ".5";
   }
 
+  function nodeLatencySizeMult(taskNodeEntity) {
+    return nodeLatencySize(taskNodeEntity) * 2;
+  }
+
   function nodeLatencySize(taskNodeEntity) {
-    console.log(taskNodeEntity);
-    if (taskNodeEntity.latency > 100) {
-      return 5.5;
-    } else if (taskNodeEntity.status > 50) {
+    if (taskNodeEntity.latency > 120) {
+      return 6;
+    } else if (taskNodeEntity.latency > 60) {
       return 5;
-    } else if (taskNodeEntity.status > 10) {
+    } else if (taskNodeEntity.latency > 10) {
       return 4.5;
-    } else if (taskNodeEntity.status > 5) {
+    } else if (taskNodeEntity.latency > 5) {
       return 4;
     }
     return 3.5;
   }
 
   function nodeLatencyColor(taskNodeEntity) {
-    console.log(taskNodeEntity);
-    if (taskNodeEntity.latency > 100) {
-      return "red";
-    } else if (taskNodeEntity.status > 50) {
-      return "orange";
-    } else if (taskNodeEntity.status > 10) {
-      return "black";
-    } else if (taskNodeEntity.status > 5) {
-      return "#333";
+    if (taskNodeEntity.latency > 120) {
+      return "#FF0000";
+    } else if (taskNodeEntity.latency > 60) {
+      return "#FF9900";
+    } else if (taskNodeEntity.latency > 10) {
+      return "#FFC266";
+    } else if (taskNodeEntity.latency > 5) {
+      return "#FFB2B2";
     }
-    return "lightsteelblue";
+    return "#666";
   }
 
+  function nodeRuntime(taskNodeEntity) {
+    if (taskNodeEntity.run_time > 420) {
+      return "#FF0000";
+    } else if (taskNodeEntity.run_time > 240) {
+      return "#FF5F5F";
+    } else if (taskNodeEntity.run_time > 120) {
+      return "#FF9900";
+    } else if (taskNodeEntity.run_time > 60) {
+      return "#FFC266";
+    } else if (taskNodeEntity.run_time > 30) {
+      return "#CC00CC";
+    } else if (taskNodeEntity.run_time > 10) {
+      return "#9933FF";
+    } else if (taskNodeEntity.run_time > 5) {
+      return "#E0C2FF";
+    } else if (taskNodeEntity.run_time > 1) {
+      return "#EBD6FF";
+    }
+    return "#fff";
+  }
 
   function setNodeSizeColor(node) {
     node.attr("r", nodeLatencySize)
       .style("stroke", nodeLatencyColor)
       .style("stroke-width", nodeLatencyStroke);
 
-    node.style("fill", nodeStatus);
+    node.style("fill", nodeRuntime);
+  }
+
+  function getStatus(d) {
+    var shape = "circle";
+    if (d.status_code > 1) {
+      shape = "rect";
+    }
+    return shape;
   }
 
   function update(root, source, reload) {
@@ -296,23 +318,6 @@ var track = function(address, requestid) {
     // Normalize for fixed-depth.
     nodes.forEach(function(d) { d.y = d.depth * 30; });
 
-    // Compute the new tree layout.
-    //var nodes = tree.nodes(root);
-
-    //// Normalize for fixed-depth.
-    //nodes.forEach(function(d) { 
-      //d.y = d.depth * 30; 
-
-      //if (d.parent !== undefined && d.parent !== null && 
-          //d.parent.children !== undefined && d.parent.children !== null) {
-        //if (d.parent.children.length > 1) {
-          //d.y += d.parent.children.indexOf(d) * 15;
-        //}
-      //} else {
-        //d.y += 15;
-      //}
-    //});
-
     // Update the nodes…
     var node = vis.selectAll("g.node")
         .data(nodes, function(d) { return d.id || (d.id = ++i); });
@@ -321,7 +326,8 @@ var track = function(address, requestid) {
     var nodeEnter = node.enter().append("svg:g")
         //.attr("id", function(d) { return d.id; })
         .attr("class", "node")
-        .attr("transform", function(d) { return "translate(" + source.x0 + "," + source.y0 + ")"; });
+        .attr("transform", function(d) { 
+          return "translate(" + source.x0 + "," + source.y0 + ")"; });
         //.on("click", function(d) { toggle(d); update(d); });
         //
     nodeEnter.append("svg:text")
@@ -350,25 +356,27 @@ var track = function(address, requestid) {
         .style("fill-opacity", 1e-6);
 
     nodeEnter.append("svg:title")
-      .text(function(d) { return d.name + " - " + d.key; });
+      .text(function(d) { return d.name + " - " + d.latency; });
 
-    nodeEnter.append("svg:circle")
-        .attr("r", 1e-6)
-        .style("fill", nodeStatus)
-        .on("click", function(d) { 
-          show(this, d); 
-        });
+    nodeEnter.append(
+      function(d) { 
+        return document.createElementNS('http://www.w3.org/2000/svg', 
+                                        'svg:' + getStatus(d));
+      })
+      .attr("r", nodeLatencySize)
+      .attr("width", nodeLatencySizeMult)
+      .attr("height", nodeLatencySizeMult)
+      .style("stroke", nodeLatencyColor)
+      .style("stroke-width", nodeLatencyStroke)
+      .style("fill", nodeRuntime)
+      .on("click", function(d) { 
+        show(this, d); 
+    });
 
     // Transition nodes to their new position.
     var nodeUpdate = node.transition()
         .duration(duration)
         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-
-    setNodeSizeColor(nodeUpdate.select("circle"));
-        //.attr("r", 4.5)
-        //.style("stroke", "#666")
-        //.style("stroke-width", ".5")
-        //.style("fill", nodeStatus);
 
     nodeUpdate.select("text")
         .style("fill-opacity", 1);
@@ -378,9 +386,6 @@ var track = function(address, requestid) {
         .duration(duration)
         .attr("transform", function(d) { return "translate(" + source.x + "," + source.y + ")"; })
         .remove();
-
-    nodeExit.select("circle")
-        .attr("r", 1e-6);
 
     nodeExit.select("text")
         .style("fill-opacity", 1e-6);
