@@ -2,9 +2,11 @@ package api
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
+	"github.com/GaryBoone/GoStats/stats"
 	"github.com/lyddonb/trajectory/db"
 )
 
@@ -21,10 +23,65 @@ type Node struct {
 	Latency     float64  `json:"latency"`
 	RunTime     float64  `json:"run_time"`
 	task        *db.Task
+	Stats       map[string]*Stats
+}
+
+type Stats struct {
+	Count   int     `json:"count"`
+	Min     float64 `json:"min"`
+	Max     float64 `json:"max"`
+	Average float64 `json:"average"`
+	Median  float64 `json:"median"`
+	StdDev  float64 `json:"std_dev"`
 }
 
 //func (n *Node) MarshalJSON() ([]byte, error) {
 //}
+
+func convertAndUpdateStat(value string, nodeStat *stats.Stats) {
+	runValue, err := strconv.ParseFloat(value, 64)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	nodeStat.Update(runValue)
+}
+
+func BuildStats(parent *Node) {
+	nodeStats := make(map[string]*stats.Stats)
+	props := []string{"end", "execution_count", "gae_latency_seconds",
+		"ran", "retry_count", "run_time", "status_code", "task_eta"}
+
+	for _, prop := range props {
+		nodeStats[prop] = &stats.Stats{}
+	}
+
+	for _, child := range parent.Children {
+		task := *child.task
+		BuildStats(child)
+		for _, prop := range props {
+			convertAndUpdateStat(task[prop], nodeStats[prop])
+		}
+	}
+
+	for key, value := range nodeStats {
+		runStat := &Stats{0, 0, 0, 0, 0, 0}
+		runStat.Count = value.Count()
+		runStat.Min = value.Min()
+		runStat.Max = value.Max()
+		runStat.Average = value.Mean()
+		stddev := value.SampleStandardDeviation()
+
+		if !math.IsNaN(stddev) {
+			runStat.StdDev = stddev
+		}
+
+		parent.Stats[key] = runStat
+	}
+
+}
 
 func (a *TaskAPI) GetRequestTaskGraph(requestId string) (*Node, error) {
 	taskKeys, e := a.ListRequestTaskKeysAsSet(requestId)
@@ -39,6 +96,8 @@ func (a *TaskAPI) GetRequestTaskGraph(requestId string) (*Node, error) {
 	if len(taskKeys) != 0 {
 		parent = a.ProcessTaskKeys(requestId, taskKeys, parent)
 	}
+
+	BuildStats(parent)
 
 	return parent, nil
 }
@@ -227,6 +286,7 @@ func BuildParentNode(requestId string) *Node {
 		0,
 		0,
 		nil,
+		make(map[string]*Stats),
 	}
 }
 
@@ -245,6 +305,7 @@ func BuildChildNode(taskId, taskKey, contextId string,
 		0,
 		0,
 		nil,
+		make(map[string]*Stats),
 	}
 }
 
