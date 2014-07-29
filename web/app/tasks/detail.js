@@ -3,6 +3,13 @@
 var React = require('react');
 var Urls = require('../urls');
 
+var lightest = "lightest";
+var lighter = "lighter";
+var light = "light";
+var dark = "dark";
+var darker = "darker";
+var darkest = "darkest";
+
 var TaskDetail = React.createClass({
 
   componentDidMount: function() {
@@ -84,19 +91,19 @@ var TaskItem = React.createClass({
 
     var tasks = Object.keys(this.state.data).map(function(key, index) {
       if (!keyIn(key, mykeys)) {
-        return buildTaskForm(key, self.state.data[key]);
+        return buildFormGroup(key, self.state.data[key], 1);
       }
     });
 
     var task_id = Object.keys(this.state.data).map(function(key, index) {
       if (keyIn(key, mykeys)) {
-          return buildTaskForm(key, self.state.data[key]);
+          return buildFormGroup(key, self.state.data[key], 1);
       }
     });
 
     var extra = Object.keys(this.state.data).map(function(key, index) {
       if (!keyIn(key, mykeys) && !keyIn(key, remainder)) {
-        return buildTaskForm(key, self.state.data[key]);
+        return buildFormGroup(key, self.state.data[key], 1);
       }
     });
 
@@ -200,26 +207,26 @@ var TaskRequestItem = React.createClass({
 
     var requests = Object.keys(this.state.data).map(function(key, index) {
       if (!keyIn(key, datakeys) && !keyIn(key, memcachekeys)) {
-        return buildFormGroup(key, self.state.data[key]);
+        return buildFormGroup(key, self.state.data[key], 0);
       }
     });
 
     
     var ds = Object.keys(this.state.data).map(function(key, index) {
       if (keyIn(key, datakeys)) {
-        return buildFormGroup(key, self.state.data[key]);
+        return buildFormGroup(key, self.state.data[key], 0);
       }
     });
     
     var mc = Object.keys(this.state.data).map(function(key, index) {
       if (keyIn(key, memcachekeys)) {
-        return buildFormGroup(key, self.state.data[key]);
+        return buildFormGroup(key, self.state.data[key], 0);
       }
     });
 
     var extra = Object.keys(this.state.data).map(function(key, index) {
       if (!keyIn(key, memcachekeys) && !keyIn(key, datakeys) && !keyIn(key, originalkeys)) {
-        return buildFormGroup(key, self.state.data[key]);
+        return buildFormGroup(key, self.state.data[key], 0);
       }
     });
 
@@ -253,7 +260,7 @@ var TaskRequestItem = React.createClass({
 
 });
 
-var buildTaskForm= function(prop, value) {
+var buildFormGroup = function(prop, value, check) {
 
     function toTitleCase(str)
     {
@@ -261,82 +268,58 @@ var buildTaskForm= function(prop, value) {
             + txt.substr(1).toLowerCase();});
     }
 
-    var mystring = prop;
-    mystring = mystring.replace(/_/g, ' ');
-    mystring = toTitleCase(mystring);
-
-    var color = " ";
-
-    switch (prop) {
-        case "execution_count":
-            if (value > 0){
-                color = "darkest";
-            }
-            break;
-        case "retry_count":
-            if (value > 0){
-                color = "darkest";
-            }
-            break;
-        case "status_code":
-            if (value != 200){
-                color = "darkest";
-            }
-            break;
-        case "gae_latency_seconds":
-            if (value > 120){
-                color = "darker";
-            }else if (value > 60){
-                color = "dark";
-            }else if (value > 30){
-                color = "light";
-            }else if (value > 10){
-                color = "lighter";
-            }else if (value > 1){
-                color = "lightest";
-            }else{
-                color = "";
-            }
-            break;
-        case "run_time":
-            if (value > 480){
-                color = "darkest";
-            }else if (value > 120){
-                color = "darker";
-            }else if (value > 60){
-                color = "dark";
-            }else if (value > 10){
-                color = "light";
-            }else if (value > 5){
-                color = "lighter";
-            }else if (value > 1){
-                color = "lightest";
-            }else{
-                color = "";
-            }
-            break;
-        default:
-            color = " ";
+    function get_480_120_60_10_5_1(value) {
+        if (value > 480){
+            return darkest;
+        }
+        if (value > 120){
+            return darker;
+        }
+        if (value > 60){
+            return dark;
+        }
+        if (value > 10){
+            return light;
+        }
+        if (value > 5){
+            return lighter;
+        }
+        if (value > 1){
+            return lightest;
+        }
+        return " ";
     }
 
-    if (prop == "ran" || prop == "task_eta" || prop == "end") {
-      value = new Date(value*1000).toString();
+    function get_20_10_5(value) {
+        if (value > 20){
+            return darkest;
+        }
+        if (value > 10){
+            return dark;
+        }
+        if (value > 5){
+            return light;
+        }
+        return " ";
     }
 
-  return (
-      <tr className={color}>
-          <td title={prop}  className="col-xs-2"><label>{mystring}:&nbsp;</label></td>
-          <td className="col-xs-4"><span>{value}</span></td>
-      </tr>
-  )
-}
-
-var buildFormGroup = function(prop, value) {
-
-    function toTitleCase(str)
-    {
-        return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() 
-            + txt.substr(1).toLowerCase();});
+    function get_120_60_30_10_1(value) {
+        if (value > 120){
+            return darkest;
+        }
+        if (value > 60){
+            return dark;
+        }
+        if (value > 30){
+            return light;
+        }
+        if (value > 10){
+            return light;
+        }
+        if (value > 1){
+            return light;
+        }
+        return " ";
     }
 
     var mystring = prop;
@@ -347,125 +330,91 @@ var buildFormGroup = function(prop, value) {
 
     var color = " ";
 
+    if (prop == "ran" || prop == "task_eta" || prop == "end") {
+      value = new Date(value*1000).toString();
+    }
+
     switch (prop) {
-        case "cpu_usage":
-            if (newValue > 100){
-                color = "darkest";
+        case "execution_count":
+            if (value > 0){
+                color = darkest;
             }
             break;
-        case "memory_usage":
-            if (newValue > 200){
-                color = "darkest";
-            }
-            break;
-        case "rpc_total_count":
-            if (newValue > 100){
-                color = "darkest";
-            }
-            break;
-        case "taskqueue_BulkAdd_duration":
-            if (newValue > 5){
-                color = "darkest";
+        case "retry_count":
+            if (value > 0){
+                color = darkest;
             }
             break;
         case "status_code":
             if (newValue != 200){
-                color = "darkest";
+                color = darkest;
+            }
+            break;
+        case "gae_latency_seconds":
+            color = get_120_60_30_10_1(value);
+            break;
+        case "run_time":
+            color = get_480_120_60_10_5_1(value);
+            break;
+        case "cpu_usage":
+            if (newValue > 100){
+                color = darkest;
+            }
+            break;
+        case "memory_usage":
+            if (newValue > 200){
+                color = darkest;
+            }
+            break;
+        case "rpc_total_count":
+            if (newValue > 100){
+                color = darkest;
+            }
+            break;
+        case "taskqueue_BulkAdd_duration":
+            if (newValue > 5){
+                color = darkest;
             }
             break;
         case "exec_time":
-            if (newValue > 480){
-                color = "darkest";
-            }else if (newValue > 120){
-                color = "darker";
-            }else if (newValue > 60){
-                color = "dark";
-            }else if (newValue > 10){
-                color = "light";
-            }else if (newValue > 5){
-                color = "lighter";
-            }else if (newValue > 1){
-                color = "lightest";
-            }else{
-                color = "";
-            }
+            color = get_480_120_60_10_5_1(newValue);
             break;
         case "datastore_v3_Get_duration":
-            if (newValue > 20){
-                color = "darkest";
-            }else if (newValue > 10){
-                color = "dark";
-            }else if (newValue > 5){
-                color = "light";
-            }else{
-                color = "";
-            }
+            color = get_20_10_5(newValue);
             break;
         case "datastore_v3_Put_duration":
-            if (newValue > 20){
-                color = "darkest";
-            }else if (newValue > 10){
-                color = "dark";
-            }else if (newValue > 5){
-                color = "light";
-            }else{
-                color = "";
-            }
+            color = get_20_10_5(newValue);
             break;
         case "memcache_Delete_duration":
-            if (newValue > 20){
-                color = "darkest";
-            }else if (newValue > 10){
-                color = "dark";
-            }else if (newValue > 5){
-                color = "light";
-            }else{
-                color = "";
-            }
+            color = get_20_10_5(newValue);
             break;
         case "memcache_Get_offset":
-            if (newValue > 20){
-                color = "darkest";
-            }else if (newValue > 10){
-                color = "dark";
-            }else if (newValue > 5){
-                color = "light";
-            }else{
-                color = "";
-            }
+            color = get_20_10_5(newValue);
             break;
         case "memcache_Set_duration":
-            if (newValue > 20){
-                color = "darkest";
-            }else if (newValue > 10){
-                color = "dark";
-            }else if (newValue > 5){
-                color = "light";
-            }else{
-                color = "";
-            }
+            color = get_20_10_5(newValue);
             break;
         case "urlfetch_Fetch_duration":
-            if (newValue > 20){
-                color = "darkest";
-            }else if (newValue > 10){
-                color = "dark";
-            }else if (newValue > 5){
-                color = "light";
-            }else{
-                color = "";
-            }
+            color = get_20_10_5(newValue);
             break;
         default:
             color = " ";
     }
 
-  return (
-      <tr className={color}>
-          <td title={prop} className="col-xs-4"><label>{mystring}:&nbsp;</label></td>
-          <td className="col-xs-2"><span>{value}</span></td>
-      </tr>
-  )
+    if (check == 0) {
+      return (
+          <tr className={color}>
+              <td title={prop} className="col-xs-4"><label>{mystring}:&nbsp;</label></td>
+              <td className="col-xs-2"><span>{value}</span></td>
+          </tr>
+      )
+    }
+    return (
+        <tr className={color}>
+            <td title={prop} className="col-xs-2"><label>{mystring}:&nbsp;</label></td>
+            <td className="col-xs-4"><span>{value}</span></td>
+        </tr>
+    )
 }
 
 module.exports = TaskDetail;
