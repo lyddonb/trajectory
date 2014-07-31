@@ -28,6 +28,8 @@ func SetupTaskRouter(pool db.DBPool, prefix string, writeToFile bool, middleware
 		middleware(taskServices.getRequestsForAddress))
 	router.Get(prefix+"addresses/:address/requests/:requestid/tasks",
 		middleware(taskServices.getTaskKeysForRequests))
+	router.Get(prefix+"addresses/:address/requests/:requestid/chain/:endid",
+		middleware(taskServices.getTaskGraphChain))
 	router.Get(prefix+"addresses/:address/requests/:requestid/taskgraph",
 		middleware(taskServices.getTaskGraphForRequest))
 	router.Get(prefix+"task/:taskKey", middleware(taskServices.getTaskByKey))

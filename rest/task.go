@@ -103,6 +103,20 @@ func (s *TaskServices) getTaskGraphForRequest(w http.ResponseWriter, r *http.Req
 	SendJsonResponse(w, graph, err)
 }
 
+func (s *TaskServices) getTaskGraphChain(w http.ResponseWriter, r *http.Request) {
+	requestid := r.URL.Query().Get(":requestid")
+	endid := r.URL.Query().Get(":endid")
+
+	if requestid == "" {
+		SendJsonErrorResponse(w, nil, "No request id passed in.")
+		return
+	}
+
+	chain, err := s.api.GetFullGraph(requestid, endid)
+
+	SendJsonResponse(w, chain, err)
+}
+
 func (s *TaskServices) getAllTasks(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Send it"))
 }
