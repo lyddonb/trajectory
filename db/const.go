@@ -6,7 +6,7 @@ const (
 	REQUEST_ID        = "request_id"
 	PARENT_REQUESTS   = "ParentRequests"
 	PARENT_REQUEST_ID = "parent_request_id"
-	REQUEST_ADDRESS   = "request_address"
+	HOST              = "host"
 	ADDRESS           = "Address"
 	URL               = "url"
 	STAT_NAME         = "stat_name"

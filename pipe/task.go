@@ -29,10 +29,10 @@ func (tp *TaskPipeline) Open() bool {
 func (tp *TaskPipeline) Parse(message []byte, remoteAddr string) {
 	task := ParseTask(message)
 
-	_, ok := task[db.REQUEST_ADDRESS]
+	_, ok := task[db.HOST]
 
 	if !ok {
-		task[db.REQUEST_ADDRESS] = remoteAddr
+		task[db.HOST] = remoteAddr
 	}
 
 	_, err := tp.dal.SaveTask(task)

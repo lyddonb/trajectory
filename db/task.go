@@ -105,7 +105,7 @@ func (c *TaskDataAccess) SaveTask(task Task) (string, error) {
 		return "", err
 	}
 
-	err = AddParentRequest(conn, task[REQUEST_ADDRESS], timestamp, parentRequestId)
+	err = AddParentRequest(conn, task[HOST], timestamp, parentRequestId)
 
 	if err != nil {
 		return "", err
@@ -117,7 +117,7 @@ func (c *TaskDataAccess) SaveTask(task Task) (string, error) {
 		return "", err
 	}
 
-	err = AddAddress(conn, task[REQUEST_ADDRESS], timestamp)
+	err = AddAddress(conn, task[HOST], timestamp)
 
 	if err != nil {
 		return "", err

@@ -29,10 +29,10 @@ func (s *TaskServices) addTask(w http.ResponseWriter, r *http.Request) {
 
 	task := api.ConvertTask(taskJson)
 
-	_, ok := task[db.REQUEST_ADDRESS]
+	_, ok := task[db.HOST]
 
 	if !ok {
-		task[db.REQUEST_ADDRESS] = r.Host
+		task[db.HOST] = r.Host
 	}
 
 	timestamp, e := s.api.SaveTask(task)
