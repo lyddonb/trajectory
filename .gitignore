@@ -5,3 +5,5 @@ node_modules
 web/js/.module-cache
 *.test
 login.json
+web/js/app.js
+data

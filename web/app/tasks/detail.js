@@ -74,11 +74,15 @@ var TaskItem = React.createClass({
   render: function() {
     var self = this;
 
-    var mykeys = ["id", "parent_request_id", "parent_task_id", "request_address",
-        "request_info", "task_id", "url"]
+    var mykeys = ["id", "parent_task_id",
+        "task_id", "url", "context_id"];
 
     var remainder = ["end", "execution_count", "gae_latency_seconds",
-        "ran", "retry_count", "run_time", "status_code", "task_eta"]
+        "ran", "retry_count", "run_time", "status_code", "task_eta"];
+
+    var request_info = ["app_id", "host", "instance_id", "module_id",
+      "request_id", "version_id", "parent_request_id",
+      "request_address"];
 
     function keyIn(key, list) {
         for (i=0; i < list.length; i++) {
@@ -89,8 +93,10 @@ var TaskItem = React.createClass({
         return false;
     }
 
+    var task_id = mykeys.map(function(key, index))
+
     var tasks = Object.keys(this.state.data).map(function(key, index) {
-      if (!keyIn(key, mykeys)) {
+      if (keyIn(key, remainder)) {
         return buildFormGroup(key, self.state.data[key], 1);
       }
     });
@@ -101,18 +107,24 @@ var TaskItem = React.createClass({
       }
     });
 
+    var request_details = Object.keys(this.state.data).map(function(key, index) {
+      if (keyIn(key, request_info)) {
+          return buildFormGroup(key, self.state.data[key], 1);
+      }
+    });
+
+    var all = mykeys + remainder + request_info;
+
     var extra = Object.keys(this.state.data).map(function(key, index) {
-      if (!keyIn(key, mykeys) && !keyIn(key, remainder)) {
+      if (!keyIn(key, all)) {
         return buildFormGroup(key, self.state.data[key], 1);
       }
     });
 
     var request = <div></div>;
 
-    if (self.state.data["request_info"] !== undefined) {
-      var requestInfoSplit = self.state.data["request_info"].split("#");
-      var requestid = requestInfoSplit[requestInfoSplit.length - 1]
-      request = <TaskRequestItem requestid={requestid} />
+    if (self.state.data["request_id"] !== undefined) {
+      request = <TaskRequestItem requestid={self.state.data.request_id} />
     }
 
     return <div className="col-lg-12">
@@ -127,6 +139,12 @@ var TaskItem = React.createClass({
         <table className="table table-striped">
             <tbody>
             {tasks}
+            </tbody>
+        </table>
+        <h3>Task Host Details</h3>
+        <table className="table table-striped">
+            <tbody>
+            {request_details}
             </tbody>
         </table>
         <h3>Extra Task Stats</h3>
