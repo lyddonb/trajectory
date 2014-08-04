@@ -93,8 +93,6 @@ var TaskItem = React.createClass({
         return false;
     }
 
-    var task_id = mykeys.map(function(key, index))
-
     var tasks = Object.keys(this.state.data).map(function(key, index) {
       if (keyIn(key, remainder)) {
         return buildFormGroup(key, self.state.data[key], 1);
