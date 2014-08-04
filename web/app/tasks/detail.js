@@ -74,8 +74,7 @@ var TaskItem = React.createClass({
   render: function() {
     var self = this;
 
-    var mykeys = ["id", "parent_task_id",
-        "task_id", "url", "context_id"];
+    var mykeys = ["id", "parent_task_id", "task_id", "url", "context_id"];
 
     var remainder = ["end", "execution_count", "gae_latency_seconds",
         "ran", "retry_count", "run_time", "status_code", "task_eta"];
@@ -93,28 +92,26 @@ var TaskItem = React.createClass({
         return false;
     }
 
-    var tasks = Object.keys(this.state.data).map(function(key, index) {
-      if (keyIn(key, remainder)) {
+    var task_id = mykeys.map(function(key, index) {
+      if (key in self.state.data) {
         return buildFormGroup(key, self.state.data[key], 1);
       }
     });
 
-    var task_id = Object.keys(this.state.data).map(function(key, index) {
-      if (keyIn(key, mykeys)) {
-          return buildFormGroup(key, self.state.data[key], 1);
+    var tasks = remainder.map(function(key, index) {
+      if (key in self.state.data) {
+        return buildFormGroup(key, self.state.data[key], 1);
       }
     });
 
-    var request_details = Object.keys(this.state.data).map(function(key, index) {
-      if (keyIn(key, request_info)) {
+    var request_details = request_info.map(function(key, index) {
+      if (key in self.state.data) {
           return buildFormGroup(key, self.state.data[key], 1);
       }
     });
-
-    var all = mykeys + remainder + request_info;
 
     var extra = Object.keys(this.state.data).map(function(key, index) {
-      if (!keyIn(key, all)) {
+      if (!keyIn(key, mykeys.concat(remainder, request_info))) {
         return buildFormGroup(key, self.state.data[key], 1);
       }
     });
