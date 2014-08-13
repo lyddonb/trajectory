@@ -152,7 +152,7 @@ var track = function(address, requestid) {
   }
 
   var m = [10, 10, 10, 10],
-    w = 2280 - m[1] - m[3],
+    w = 3280 - m[1] - m[3],
     h = 1800 - m[0] - m[2],
     i = 0,
     tree = d3.layout.tree().size([h, w]),
